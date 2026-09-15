@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ImportBackup } from '../components/ImportBackup'
 import { db, saveSettings } from '../db/db'
 import { exportAllDataAsJson, exportGlucoseReadingsAsCsv } from '../lib/exportAll'
 import { useSettings } from '../hooks/data'
@@ -100,6 +101,11 @@ export function SettingsPage() {
             Export glucose readings (CSV)
           </button>
         </div>
+      </section>
+
+      <section className="card">
+        <h2>Restore from backup</h2>
+        <ImportBackup />
       </section>
 
       <section className="card">

@@ -43,11 +43,21 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'id'> = {
   goalHbA1c: 5.7,
 }
 
+const SETTINGS_ID = 1
+
+/**
+ * Settings is a singleton row at a fixed id, not "whichever row comes
+ * first" — a read-then-add race (e.g. two components mounting around the
+ * same time) can otherwise create duplicate rows, since add() doesn't
+ * check for an existing one. put() with a fixed id is idempotent: it's
+ * a no-op collision, never a duplicate.
+ */
 export async function getSettings(): Promise<AppSettings> {
-  const existing = await db.settings.toCollection().first()
+  const existing = await db.settings.get(SETTINGS_ID)
   if (existing) return existing
-  const id = await db.settings.add(DEFAULT_SETTINGS)
-  return { id, ...DEFAULT_SETTINGS }
+  const settings: AppSettings = { id: SETTINGS_ID, ...DEFAULT_SETTINGS }
+  await db.settings.put(settings)
+  return settings
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {

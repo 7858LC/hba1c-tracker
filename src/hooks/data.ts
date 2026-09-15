@@ -30,7 +30,7 @@ export function useSettings(): AppSettings | undefined {
     getSettings().then(setSettings)
   }, [])
 
-  const live = useLiveQuery(() => db.settings.toCollection().first(), [])
+  const live = useLiveQuery(() => db.settings.get(1), [])
 
   return live ?? settings
 }
