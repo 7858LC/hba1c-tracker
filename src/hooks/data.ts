@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db, getSettings } from '../db/db'
-import type { AppSettings } from '../types'
+import { computeStreak } from '../lib/streaks'
+import type { AdherenceEntry, AppSettings } from '../types'
 
 export function useAllReadings() {
   return useLiveQuery(() => db.readings.orderBy('timestamp').toArray(), []) ?? []
@@ -21,6 +22,21 @@ export function useAllProtocols() {
 
 export function useAllAdherence() {
   return useLiveQuery(() => db.adherence.toArray(), []) ?? []
+}
+
+/** True when an active protocol exists and today has no adherence logged yet. */
+export function useNeedsProtocolLog(): boolean {
+  const active = useLiveQuery(() => db.protocols.filter((p) => p.active).first(), [])
+  const adherence = useLiveQuery<AdherenceEntry[]>(
+    () =>
+      active?.id != null
+        ? db.adherence.where('protocolId').equals(active.id).toArray()
+        : Promise.resolve([]),
+    [active?.id],
+  )
+
+  if (active?.id == null || !adherence) return false
+  return !computeStreak(adherence, active.id).loggedToday
 }
 
 export function useSettings(): AppSettings | undefined {

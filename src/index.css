@@ -129,6 +129,7 @@ select {
 }
 
 .nav-btn {
+  position: relative;
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -138,6 +139,16 @@ select {
   white-space: nowrap;
   font-size: 14px;
   font-weight: 500;
+}
+
+.nav-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-critical);
 }
 
 .nav-btn:hover {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNeedsProtocolLog } from './hooks/data'
 import { DashboardPage } from './pages/DashboardPage'
 import { GlucosePage } from './pages/GlucosePage'
 import { LifestylePage } from './pages/LifestylePage'
@@ -19,6 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 function App() {
   const [tab, setTab] = useState<Tab>('log')
+  const needsProtocolLog = useNeedsProtocolLog()
 
   return (
     <>
@@ -37,6 +39,9 @@ function App() {
             onClick={() => setTab(t.id)}
           >
             {t.label}
+            {t.id === 'protocol' && needsProtocolLog && (
+              <span className="nav-dot" aria-label="Not logged today" title="Not logged today" />
+            )}
           </button>
         ))}
       </nav>

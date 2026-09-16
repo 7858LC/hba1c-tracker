@@ -1,10 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db } from '../../db/db'
+import { PROTOCOL_TEMPLATES, type ProtocolTemplate } from '../../lib/protocolTemplates'
 import type { ProtocolRule } from '../../types'
 
 function newRuleId(): string {
   return `r${Date.now()}${Math.floor(Math.random() * 1000)}`
+}
+
+function rulesFromTemplate(template: ProtocolTemplate): ProtocolRule[] {
+  return template.rules.map((label) => ({ id: newRuleId(), label }))
 }
 
 export function ProtocolEditor() {
@@ -32,6 +37,12 @@ export function ProtocolEditor() {
 
   function removeRule(id: string) {
     setRules((r) => r.filter((rule) => rule.id !== id))
+  }
+
+  function applyTemplate(template: ProtocolTemplate) {
+    setName(template.name)
+    setDescription(template.description)
+    setRules(rulesFromTemplate(template))
   }
 
   async function save() {
@@ -94,6 +105,27 @@ export function ProtocolEditor() {
     <div className="card">
       <h2>{active ? 'Edit protocol' : 'New protocol'}</h2>
       <div className="entry-form">
+        {!active && (
+          <div className="field-row">
+            <label id="protocol-template-label">
+              Start from a template (optional — generic starting points, not
+              recommendations; edit anything after)
+            </label>
+            <div className="chip-group" role="group" aria-labelledby="protocol-template-label">
+              {PROTOCOL_TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className="chip"
+                  title={t.description}
+                  onClick={() => applyTemplate(t)}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="field-row">
           <label>Protocol name</label>
           <input
