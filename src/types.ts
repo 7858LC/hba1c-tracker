@@ -63,9 +63,17 @@ export interface ExerciseEntry {
 
 export interface SleepEntry {
   id?: number
-  /** calendar date the sleep is attributed to (morning of), YYYY-MM-DD */
+  /**
+   * Calendar date the sleep session began — the night of, not the wake
+   * date. A night of 9/16 (date: "2025-09-16") pairs with the
+   * morning-of-9/17 fasting glucose reading in correlation views, the
+   * same day-D -> day-D+1 pattern used for diet/exercise entries.
+   */
   date: string
-  hours: number
+  /** total sleep duration in minutes */
+  durationMinutes: number
+  /** minutes awake during the sleep period (WASO) */
+  wasoMinutes: number
   note?: string
   createdAt: number
   updatedAt: number

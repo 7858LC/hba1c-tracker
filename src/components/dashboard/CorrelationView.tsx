@@ -8,8 +8,12 @@ import {
   YAxis,
 } from 'recharts'
 import { ResponsiveContainer } from 'recharts'
-import { carbsVsNextDayGlucose, exerciseVsNextDayGlucose } from '../../lib/correlation'
-import type { ExerciseEntry, GlucoseReading, MealEntry } from '../../types'
+import {
+  carbsVsNextDayGlucose,
+  exerciseVsNextDayGlucose,
+  sleepVsNextDayGlucose,
+} from '../../lib/correlation'
+import type { ExerciseEntry, GlucoseReading, MealEntry, SleepEntry } from '../../types'
 
 function interpretR(r: number | null): string {
   if (r == null) return 'not enough paired days yet'
@@ -69,10 +73,12 @@ function MiniScatter({
 export function CorrelationView({
   meals,
   exercise,
+  sleep,
   readings,
 }: {
   meals: MealEntry[]
   exercise: ExerciseEntry[]
+  sleep: SleepEntry[]
   readings: GlucoseReading[]
 }) {
   const carbsCorr = useMemo(() => carbsVsNextDayGlucose(meals, readings), [meals, readings])
@@ -80,10 +86,11 @@ export function CorrelationView({
     () => exerciseVsNextDayGlucose(exercise, readings),
     [exercise, readings],
   )
+  const sleepCorr = useMemo(() => sleepVsNextDayGlucose(sleep, readings), [sleep, readings])
 
   return (
     <div className="card">
-      <h2>Diet/exercise vs next-day glucose</h2>
+      <h2>Diet/exercise/sleep vs next-day glucose</h2>
       <p className="hint">
         Plain paired-day correlation, not a model — every point below is a real day's data so
         you can audit it yourself.
@@ -112,6 +119,18 @@ export function CorrelationView({
           />
           <p className="stat-caveat">
             n={exerciseCorr.n} paired days — {interpretR(exerciseCorr.r)}
+          </p>
+        </div>
+        <div>
+          <h3>Sleep → next-morning fasting glucose</h3>
+          <MiniScatter
+            points={sleepCorr.points}
+            xLabel={sleepCorr.xLabel}
+            yLabel={sleepCorr.yLabel}
+            color="var(--series-3)"
+          />
+          <p className="stat-caveat">
+            n={sleepCorr.n} paired nights — {interpretR(sleepCorr.r)}
           </p>
         </div>
       </div>

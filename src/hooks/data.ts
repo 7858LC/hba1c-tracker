@@ -16,6 +16,10 @@ export function useAllExercise() {
   return useLiveQuery(() => db.exercise.orderBy('timestamp').toArray(), []) ?? []
 }
 
+export function useAllSleep() {
+  return useLiveQuery(() => db.sleep.orderBy('date').toArray(), []) ?? []
+}
+
 export function useAllProtocols() {
   return useLiveQuery(() => db.protocols.toArray(), []) ?? []
 }

@@ -1,4 +1,4 @@
-import type { ExerciseEntry, GlucoseReading, MealEntry } from '../types'
+import type { ExerciseEntry, GlucoseReading, MealEntry, SleepEntry } from '../types'
 import { DAY_MS, toDateKey } from './dates'
 
 export function pearsonCorrelation(xs: number[], ys: number[]): number | null {
@@ -118,5 +118,43 @@ export function exerciseVsNextDayGlucose(
     points,
     xLabel: 'Exercise (min) that day',
     yLabel: 'Avg glucose (mg/dL) next day',
+  }
+}
+
+/**
+ * Correlates a night's sleep (keyed by the night it began, e.g. "2025-09-16"
+ * for the night of 9/16 into 9/17) against the FOLLOWING morning's fasting
+ * glucose specifically — not a same-day average — since sleep's
+ * physiological link (dawn phenomenon, overnight cortisol) is to the next
+ * fasting reading, not to whatever glucose gets logged that calendar day.
+ */
+export function sleepVsNextDayGlucose(
+  sleep: SleepEntry[],
+  readings: GlucoseReading[],
+): LagCorrelationResult {
+  const fastingByDay = dailyAverage(
+    readings.filter((r) => r.context === 'fasting'),
+    (r: GlucoseReading) => r.value,
+  )
+  const points: LagCorrelationPoint[] = []
+  for (const entry of sleep) {
+    const nextDay = new Date(`${entry.date}T00:00:00`)
+    nextDay.setTime(nextDay.getTime() + DAY_MS)
+    const nextDayKey = toDateKey(nextDay.getTime())
+    const fasting = fastingByDay.get(nextDayKey)
+    if (fasting != null) {
+      points.push({ date: entry.date, x: entry.durationMinutes / 60, y: fasting })
+    }
+  }
+  points.sort((a, b) => a.date.localeCompare(b.date))
+  return {
+    r: pearsonCorrelation(
+      points.map((p) => p.x),
+      points.map((p) => p.y),
+    ),
+    n: points.length,
+    points,
+    xLabel: 'Sleep duration (h) that night',
+    yLabel: 'Fasting glucose (mg/dL) next morning',
   }
 }

@@ -3,12 +3,13 @@ import { EA1CCard } from '../components/dashboard/EA1CCard'
 import { TimeInRangeChart } from '../components/dashboard/TimeInRangeChart'
 import { TrendChart } from '../components/dashboard/TrendChart'
 import { VariabilityCard } from '../components/dashboard/VariabilityCard'
-import { useAllExercise, useAllMeals, useAllReadings, useSettings } from '../hooks/data'
+import { useAllExercise, useAllMeals, useAllReadings, useAllSleep, useSettings } from '../hooks/data'
 
 export function DashboardPage() {
   const readings = useAllReadings()
   const meals = useAllMeals()
   const exercise = useAllExercise()
+  const sleep = useAllSleep()
   const settings = useSettings()
 
   if (!settings) return <p>Loading…</p>
@@ -28,7 +29,7 @@ export function DashboardPage() {
         high={settings.targetRangeHigh}
       />
 
-      <CorrelationView meals={meals} exercise={exercise} readings={readings} />
+      <CorrelationView meals={meals} exercise={exercise} sleep={sleep} readings={readings} />
     </div>
   )
 }
