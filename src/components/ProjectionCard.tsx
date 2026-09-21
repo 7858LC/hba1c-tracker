@@ -1,4 +1,4 @@
-import { MIN_DAYS_FOR_PROJECTION, projectTargetDate } from '../lib/projection'
+import { computeSustainedUnderGoal, MIN_DAYS_FOR_PROJECTION, projectTargetDate } from '../lib/projection'
 import type { GlucoseReading } from '../types'
 
 export function ProjectionCard({
@@ -9,13 +9,16 @@ export function ProjectionCard({
   goal: number
 }) {
   const result = projectTargetDate(readings, goal)
+  const sustained = computeSustainedUnderGoal(readings, goal)
 
   return (
     <div className="card">
       <h2>Target projection</h2>
       <p className="hint">
-        A straight-line fit through your recent rolling eA1C, solved for when it crosses your
-        goal — not a promise, just where the current trend points.
+        The real goal is maintaining under {goal}% across two consecutive real lab draws
+        (~6 months of sustained behavior), not touching it once. A straight-line fit through
+        your recent rolling eA1C, solved for when it FIRST crosses goal, is one answer — but it
+        doesn't tell you whether a crossing holds. The second number below does.
       </p>
 
       {result.status === 'insufficient_data' && (
@@ -64,6 +67,32 @@ export function ProjectionCard({
             Current eA1C: {result.currentEA1C?.toFixed(2)}% · fit quality r² ={' '}
             {result.r2?.toFixed(2)} · based on {result.daysOfData} days of readings. This is a
             projection from daily leading indicators, not a lab result or medical guidance.
+          </p>
+        </>
+      )}
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+
+      <h3>Sustained duration</h3>
+      {sustained.currentlyUnder ? (
+        <>
+          <span className="status-pill good">Holding</span>
+          <p style={{ marginTop: 8 }}>
+            The rolling trend has stayed at or under {goal}% for{' '}
+            <strong>{sustained.consecutiveDays} consecutive day{sustained.consecutiveDays === 1 ? '' : 's'}</strong>
+            {sustained.consecutiveDays >= 7
+              ? ` (~${Math.round(sustained.consecutiveDays / 7)} week${Math.round(sustained.consecutiveDays / 7) === 1 ? '' : 's'})`
+              : ''}
+            . This is the number that answers whether a good reading is durable, not just a
+            single low draw.
+          </p>
+        </>
+      ) : (
+        <>
+          <span className="status-pill warning">Not currently under goal</span>
+          <p style={{ marginTop: 8 }}>
+            The rolling trend isn't at or under {goal}% right now, so there's no active
+            sustained-duration streak to report.
           </p>
         </>
       )}

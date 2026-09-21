@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { GlucoseReading } from '../../types'
 import { DAY_MS } from '../dates'
-import { linearRegression, projectTargetDate } from '../projection'
+import { computeSustainedUnderGoal, linearRegression, projectTargetDate } from '../projection'
 
 function readingsForDays(
   now: number,
@@ -73,5 +73,32 @@ describe('projectTargetDate', () => {
     expect(result.slopePerDay).toBeLessThan(0)
     expect(result.projectedDate).not.toBeNull()
     expect(result.projectedDaysRemaining).toBeGreaterThan(0)
+  })
+})
+
+describe('computeSustainedUnderGoal', () => {
+  const now = Date.now()
+
+  it('counts consecutive trailing days under goal for a trend that has settled there', () => {
+    // steep, sustained decline so the 14-day TRAILING average (which lags
+    // the raw values) has clearly settled under goal by the end, not just
+    // barely touched it
+    const readings = readingsForDays(now, 40, (day) => 200 - day * 3)
+    const result = computeSustainedUnderGoal(readings, 5.7, now)
+    expect(result.currentlyUnder).toBe(true)
+    expect(result.consecutiveDays).toBeGreaterThan(0)
+  })
+
+  it('reports zero consecutive days when the trend is currently above goal', () => {
+    const readings = readingsForDays(now, 20, (day) => 150 + day) // rising, stays above goal
+    const result = computeSustainedUnderGoal(readings, 5.7, now)
+    expect(result.currentlyUnder).toBe(false)
+    expect(result.consecutiveDays).toBe(0)
+  })
+
+  it('handles no data gracefully', () => {
+    const result = computeSustainedUnderGoal([], 5.7, now)
+    expect(result.currentlyUnder).toBe(false)
+    expect(result.consecutiveDays).toBe(0)
   })
 })

@@ -110,6 +110,13 @@ export interface AppSettings {
   targetRangeLow: number
   targetRangeHigh: number
   goalHbA1c: number
+  /**
+   * Fasting glucose target (mg/dL) used by the "days maintained" headline
+   * metric. Defaults to the glucose value that maps to goalHbA1c via the
+   * ADAG formula — a derived, editable starting point, not a clinical
+   * recommendation.
+   */
+  targetFastingGlucose: number
   labHbA1c?: number
   labHbA1cDate?: string
 }

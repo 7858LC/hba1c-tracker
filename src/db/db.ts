@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { ea1cToGlucose } from '../lib/ea1c'
 import type {
   GlucoseReading,
   MealEntry,
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'id'> = {
   targetRangeLow: 70,
   targetRangeHigh: 180,
   goalHbA1c: 5.7,
+  targetFastingGlucose: Math.round(ea1cToGlucose(5.7)),
 }
 
 const SETTINGS_ID = 1
@@ -54,7 +56,20 @@ const SETTINGS_ID = 1
  */
 export async function getSettings(): Promise<AppSettings> {
   const existing = await db.settings.get(SETTINGS_ID)
-  if (existing) return existing
+  if (existing) {
+    // Backfill fields added after a settings row already existed on a
+    // real device, rather than leaving `undefined` for callers to trip
+    // over — this has already happened once (targetFastingGlucose is new).
+    if (existing.targetFastingGlucose == null) {
+      const migrated: AppSettings = {
+        ...existing,
+        targetFastingGlucose: DEFAULT_SETTINGS.targetFastingGlucose,
+      }
+      await db.settings.put(migrated)
+      return migrated
+    }
+    return existing
+  }
   const settings: AppSettings = { id: SETTINGS_ID, ...DEFAULT_SETTINGS }
   await db.settings.put(settings)
   return settings

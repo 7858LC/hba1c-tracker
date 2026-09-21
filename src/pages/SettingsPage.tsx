@@ -9,6 +9,7 @@ export function SettingsPage() {
   const [targetLow, setTargetLow] = useState('')
   const [targetHigh, setTargetHigh] = useState('')
   const [goal, setGoal] = useState('')
+  const [targetFasting, setTargetFasting] = useState('')
   const [labHbA1c, setLabHbA1c] = useState('')
   const [labDate, setLabDate] = useState('')
   const [saved, setSaved] = useState(false)
@@ -18,6 +19,7 @@ export function SettingsPage() {
       setTargetLow(String(settings.targetRangeLow))
       setTargetHigh(String(settings.targetRangeHigh))
       setGoal(String(settings.goalHbA1c))
+      setTargetFasting(String(settings.targetFastingGlucose))
       setLabHbA1c(settings.labHbA1c != null ? String(settings.labHbA1c) : '')
       setLabDate(settings.labHbA1cDate ?? '')
     }
@@ -31,6 +33,7 @@ export function SettingsPage() {
       targetRangeLow: Number(targetLow),
       targetRangeHigh: Number(targetHigh),
       goalHbA1c: Number(goal),
+      targetFastingGlucose: Number(targetFasting),
       labHbA1c: labHbA1c ? Number(labHbA1c) : undefined,
       labHbA1cDate: labDate || undefined,
     })
@@ -71,6 +74,22 @@ export function SettingsPage() {
           <div className="field-row">
             <label>Goal HbA1c (%)</label>
             <input type="number" step="0.1" value={goal} onChange={(e) => setGoal(e.target.value)} />
+            <span className="hint">
+              The goal is maintaining under this value across two consecutive real lab draws
+              (~6 months of sustained behavior) — not touching it once.
+            </span>
+          </div>
+          <div className="field-row">
+            <label>Target fasting glucose (mg/dL)</label>
+            <input
+              type="number"
+              value={targetFasting}
+              onChange={(e) => setTargetFasting(e.target.value)}
+            />
+            <span className="hint">
+              Used by the "days maintained" count on the dashboard. Defaults to the glucose
+              value your goal HbA1c maps to — edit it if you want a different day-to-day bar.
+            </span>
           </div>
           <div className="field-row">
             <label>Most recent lab-drawn HbA1c (%, optional)</label>

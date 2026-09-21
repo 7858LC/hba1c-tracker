@@ -158,3 +158,41 @@ export function projectTargetDate(
     projectedDaysRemaining: Math.round(daysRemaining),
   }
 }
+
+export interface SustainedUnderGoalResult {
+  /** consecutive trend-series days, walking back from the most recent, at/under goal */
+  consecutiveDays: number
+  /** whether the most recent point is at/under goal at all */
+  currentlyUnder: boolean
+}
+
+/**
+ * Answers a different question than projectTargetDate: not "when will the
+ * trend first cross the goal" but "how long has it actually STAYED there."
+ * A single dip under goal followed by drifting back up is a real pattern
+ * this app has seen before — the crossing date alone doesn't distinguish
+ * a durable hold from a brief touch.
+ */
+export function computeSustainedUnderGoal(
+  readings: GlucoseReading[],
+  goal: number,
+  now: number = Date.now(),
+  trendWindowDays: number = 14,
+): SustainedUnderGoalResult {
+  const series = rollingEA1CSeries(readings, trendWindowDays, now)
+
+  let consecutiveDays = 0
+  for (let i = series.length - 1; i >= 0; i--) {
+    const value = series[i].value
+    if (value != null && value <= goal) {
+      consecutiveDays++
+    } else {
+      break
+    }
+  }
+
+  const last = series[series.length - 1]
+  const currentlyUnder = last?.value != null && last.value <= goal
+
+  return { consecutiveDays, currentlyUnder }
+}
