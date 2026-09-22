@@ -9,6 +9,7 @@ import type {
   Protocol,
   AdherenceEntry,
   AppSettings,
+  SupplementChangeEntry,
 } from '../types'
 
 class HbA1cDatabase extends Dexie {
@@ -20,6 +21,7 @@ class HbA1cDatabase extends Dexie {
   protocols!: EntityTable<Protocol, 'id'>
   adherence!: EntityTable<AdherenceEntry, 'id'>
   settings!: EntityTable<AppSettings, 'id'>
+  supplementChanges!: EntityTable<SupplementChangeEntry, 'id'>
 
   constructor() {
     super('hba1c-tracker')
@@ -32,6 +34,9 @@ class HbA1cDatabase extends Dexie {
       protocols: '++id, active',
       adherence: '++id, date, protocolId, [protocolId+date]',
       settings: '++id',
+    })
+    this.version(2).stores({
+      supplementChanges: '++id, date',
     })
   }
 }

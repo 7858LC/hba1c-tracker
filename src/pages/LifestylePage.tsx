@@ -7,14 +7,17 @@ import { MealForm } from '../components/MealForm'
 import { MealLog } from '../components/MealLog'
 import { SleepForm } from '../components/SleepForm'
 import { SleepLog } from '../components/SleepLog'
+import { SupplementChangeForm } from '../components/SupplementChangeForm'
+import { SupplementChangeLog } from '../components/SupplementChangeLog'
 
-type SubTab = 'meals' | 'fasting' | 'exercise' | 'sleep'
+type SubTab = 'meals' | 'fasting' | 'exercise' | 'sleep' | 'supplements'
 
 const TABS: { id: SubTab; label: string }[] = [
   { id: 'meals', label: 'Meals / carbs' },
   { id: 'fasting', label: 'Fasting window' },
   { id: 'exercise', label: 'Exercise' },
   { id: 'sleep', label: 'Sleep' },
+  { id: 'supplements', label: 'Supplements' },
 ]
 
 export function LifestylePage() {
@@ -82,6 +85,19 @@ export function LifestylePage() {
           <section className="card">
             <h2>Recent sleep</h2>
             <SleepLog />
+          </section>
+        </>
+      )}
+
+      {tab === 'supplements' && (
+        <>
+          <section className="card">
+            <h2>Log a supplement change</h2>
+            <SupplementChangeForm />
+          </section>
+          <section className="card">
+            <h2>Recent supplement changes</h2>
+            <SupplementChangeLog />
           </section>
         </>
       )}

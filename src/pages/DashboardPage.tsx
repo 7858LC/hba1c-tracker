@@ -5,13 +5,21 @@ import { FastingTrendChart } from '../components/dashboard/FastingTrendChart'
 import { TimeInRangeChart } from '../components/dashboard/TimeInRangeChart'
 import { TrendChart } from '../components/dashboard/TrendChart'
 import { VariabilityCard } from '../components/dashboard/VariabilityCard'
-import { useAllExercise, useAllMeals, useAllReadings, useAllSleep, useSettings } from '../hooks/data'
+import {
+  useAllExercise,
+  useAllMeals,
+  useAllReadings,
+  useAllSleep,
+  useAllSupplementChanges,
+  useSettings,
+} from '../hooks/data'
 
 export function DashboardPage() {
   const readings = useAllReadings()
   const meals = useAllMeals()
   const exercise = useAllExercise()
   const sleep = useAllSleep()
+  const supplementChanges = useAllSupplementChanges()
   const settings = useSettings()
 
   if (!settings) return <p>Loading…</p>
@@ -26,9 +34,18 @@ export function DashboardPage() {
         <VariabilityCard readings={readings} />
       </div>
 
-      <TrendChart readings={readings} goal={settings.goalHbA1c} labHbA1c={settings.labHbA1c} />
+      <TrendChart
+        readings={readings}
+        goal={settings.goalHbA1c}
+        labHbA1c={settings.labHbA1c}
+        supplementChanges={supplementChanges}
+      />
 
-      <FastingTrendChart readings={readings} target={settings.targetFastingGlucose} />
+      <FastingTrendChart
+        readings={readings}
+        target={settings.targetFastingGlucose}
+        supplementChanges={supplementChanges}
+      />
 
       <TimeInRangeChart
         readings={readings}

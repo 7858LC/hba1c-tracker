@@ -10,16 +10,19 @@ import {
   YAxis,
 } from 'recharts'
 import { dailyFastingSeries } from '../../lib/daysMaintained'
-import type { GlucoseReading } from '../../types'
+import { visibleSupplementMarkers } from '../../lib/supplementMarkers'
+import type { GlucoseReading, SupplementChangeEntry } from '../../types'
 
 const WINDOWS = [30, 60, 90] as const
 
 export function FastingTrendChart({
   readings,
   target,
+  supplementChanges = [],
 }: {
   readings: GlucoseReading[]
   target: number
+  supplementChanges?: SupplementChangeEntry[]
 }) {
   const [windowDays, setWindowDays] = useState<(typeof WINDOWS)[number]>(30)
 
@@ -30,6 +33,11 @@ export function FastingTrendChart({
         value: Number(p.value.toFixed(0)),
       })),
     [readings, windowDays],
+  )
+
+  const markers = useMemo(
+    () => visibleSupplementMarkers(supplementChanges, data.map((d) => d.date)),
+    [supplementChanges, data],
   )
 
   return (
@@ -87,6 +95,15 @@ export function FastingTrendChart({
                 fontSize: 11,
               }}
             />
+            {markers.map((m, i) => (
+              <ReferenceLine
+                key={`${m.date}-${m.label}-${i}`}
+                x={m.date}
+                stroke="var(--series-3)"
+                strokeDasharray="3 3"
+                label={{ value: m.label, position: 'top', fill: 'var(--series-3)', fontSize: 10 }}
+              />
+            ))}
             <Line
               type="monotone"
               dataKey="value"
@@ -101,6 +118,7 @@ export function FastingTrendChart({
       <p className="stat-caveat">
         Daily average of fasting-context readings only — a trend line, not a single number to
         chase.
+        {markers.length > 0 && ' Dashed vertical lines mark logged supplement changes.'}
       </p>
     </div>
   )

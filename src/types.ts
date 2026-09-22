@@ -105,6 +105,25 @@ export interface AdherenceEntry {
   updatedAt: number
 }
 
+/**
+ * An event, not a daily field — logged whenever a supplement is started,
+ * stopped, or changed (formulation or dose). Shown as vertical markers on
+ * the glucose/eA1C trend charts so a later "wait, did I change something
+ * around here?" moment is answered by the chart, not memory.
+ */
+export interface SupplementChangeEntry {
+  id?: number
+  /** YYYY-MM-DD, the date the change took effect */
+  date: string
+  supplementName: string
+  /** free text, e.g. "not taking" or "500mg 1x/day" */
+  priorState: string
+  /** free text, e.g. "1000mg 1x/day" or "discontinued" */
+  newState: string
+  createdAt: number
+  updatedAt: number
+}
+
 export interface AppSettings {
   id?: number
   targetRangeLow: number

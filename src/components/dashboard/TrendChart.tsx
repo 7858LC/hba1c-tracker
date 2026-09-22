@@ -10,7 +10,8 @@ import {
   YAxis,
 } from 'recharts'
 import { rollingEA1CSeries } from '../../lib/ea1c'
-import type { GlucoseReading } from '../../types'
+import { visibleSupplementMarkers } from '../../lib/supplementMarkers'
+import type { GlucoseReading, SupplementChangeEntry } from '../../types'
 
 const WINDOWS = [30, 60, 90] as const
 
@@ -18,10 +19,12 @@ export function TrendChart({
   readings,
   goal,
   labHbA1c,
+  supplementChanges = [],
 }: {
   readings: GlucoseReading[]
   goal: number
   labHbA1c?: number
+  supplementChanges?: SupplementChangeEntry[]
 }) {
   const [windowDays, setWindowDays] = useState<(typeof WINDOWS)[number]>(30)
 
@@ -32,6 +35,11 @@ export function TrendChart({
         value: p.value != null ? Number(p.value.toFixed(2)) : null,
       })),
     [readings, windowDays],
+  )
+
+  const markers = useMemo(
+    () => visibleSupplementMarkers(supplementChanges, data.map((d) => d.date)),
+    [supplementChanges, data],
   )
 
   return (
@@ -92,6 +100,15 @@ export function TrendChart({
                 label={{ value: `Lab HbA1c ${labHbA1c}%`, position: 'insideBottomRight', fill: 'var(--series-2)', fontSize: 11 }}
               />
             )}
+            {markers.map((m, i) => (
+              <ReferenceLine
+                key={`${m.date}-${m.label}-${i}`}
+                x={m.date}
+                stroke="var(--series-3)"
+                strokeDasharray="3 3"
+                label={{ value: m.label, position: 'top', fill: 'var(--series-3)', fontSize: 10 }}
+              />
+            ))}
             <Line
               type="monotone"
               dataKey="value"
@@ -106,6 +123,7 @@ export function TrendChart({
       <p className="stat-caveat">
         Each point is a {windowDays}-day trailing eA1C estimate, not a daily lab value — HbA1c
         cannot be measured day to day.
+        {markers.length > 0 && ' Dashed vertical lines mark logged supplement changes.'}
       </p>
     </div>
   )

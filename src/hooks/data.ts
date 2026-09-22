@@ -20,6 +20,10 @@ export function useAllSleep() {
   return useLiveQuery(() => db.sleep.orderBy('date').toArray(), []) ?? []
 }
 
+export function useAllSupplementChanges() {
+  return useLiveQuery(() => db.supplementChanges.orderBy('date').toArray(), []) ?? []
+}
+
 export function useAllProtocols() {
   return useLiveQuery(() => db.protocols.toArray(), []) ?? []
 }
