@@ -2,9 +2,15 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/db'
 import { computeDurability, DEGRADATION_ALERT_THRESHOLD } from '../../lib/durability'
 import { computeStreak } from '../../lib/streaks'
-import type { Protocol } from '../../types'
+import type { GlucoseReading, Protocol } from '../../types'
 
-export function StreakCard({ protocol }: { protocol: Protocol }) {
+export function StreakCard({
+  protocol,
+  readings,
+}: {
+  protocol: Protocol
+  readings: GlucoseReading[]
+}) {
   const adherence = useLiveQuery(
     () => db.adherence.where('protocolId').equals(protocol.id!).toArray(),
     [protocol.id],
@@ -13,7 +19,7 @@ export function StreakCard({ protocol }: { protocol: Protocol }) {
   if (!adherence) return null
 
   const { currentStreak, longestStreak, loggedToday } = computeStreak(adherence, protocol.id!)
-  const durability = computeDurability(adherence, protocol)
+  const durability = computeDurability(adherence, protocol, readings)
 
   return (
     <div className="card">
@@ -43,7 +49,8 @@ export function StreakCard({ protocol }: { protocol: Protocol }) {
               <span className="stat-caveat">
                 Lowest 14-day adherence average over the trailing {durability.floorWindowDays}{' '}
                 days — the worst stretch, not the average. Current 14-day score:{' '}
-                {Math.round(durability.rolling14Score)}%.
+                {Math.round(durability.rolling14Score)}%. Each day blends checklist completion
+                with % of that day's glucose readings inside their glycemic target.
               </span>
             </>
           ) : (

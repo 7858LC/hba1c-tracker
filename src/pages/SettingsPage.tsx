@@ -6,8 +6,6 @@ import { useSettings } from '../hooks/data'
 
 export function SettingsPage() {
   const settings = useSettings()
-  const [targetLow, setTargetLow] = useState('')
-  const [targetHigh, setTargetHigh] = useState('')
   const [goal, setGoal] = useState('')
   const [targetFasting, setTargetFasting] = useState('')
   const [labHbA1c, setLabHbA1c] = useState('')
@@ -16,8 +14,6 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setTargetLow(String(settings.targetRangeLow))
-      setTargetHigh(String(settings.targetRangeHigh))
       setGoal(String(settings.goalHbA1c))
       setTargetFasting(String(settings.targetFastingGlucose))
       setLabHbA1c(settings.labHbA1c != null ? String(settings.labHbA1c) : '')
@@ -30,8 +26,6 @@ export function SettingsPage() {
     if (!settings?.id) return
     await saveSettings({
       id: settings.id,
-      targetRangeLow: Number(targetLow),
-      targetRangeHigh: Number(targetHigh),
       goalHbA1c: Number(goal),
       targetFastingGlucose: Number(targetFasting),
       labHbA1c: labHbA1c ? Number(labHbA1c) : undefined,
@@ -63,14 +57,12 @@ export function SettingsPage() {
       <section className="card">
         <h2>Targets</h2>
         <form className="entry-form" onSubmit={handleSave}>
-          <div className="field-row">
-            <label>Time-in-range: low (mg/dL)</label>
-            <input type="number" value={targetLow} onChange={(e) => setTargetLow(e.target.value)} />
-          </div>
-          <div className="field-row">
-            <label>Time-in-range: high (mg/dL)</label>
-            <input type="number" value={targetHigh} onChange={(e) => setTargetHigh(e.target.value)} />
-          </div>
+          <p className="hint">
+            "Time in target" and per-reading flags use fixed optimal-metabolic-health glycemic
+            targets (70-99 fasting/pre-meal, &lt;140 1hr post-meal, &lt;120 2hr post-meal) — these
+            aren't editable here since they're the app's clinical reference points, not a
+            per-user preference.
+          </p>
           <div className="field-row">
             <label>Goal HbA1c (%)</label>
             <input type="number" step="0.1" value={goal} onChange={(e) => setGoal(e.target.value)} />
@@ -87,8 +79,9 @@ export function SettingsPage() {
               onChange={(e) => setTargetFasting(e.target.value)}
             />
             <span className="hint">
-              Used by the "days maintained" count on the dashboard. Defaults to the glucose
-              value your goal HbA1c maps to — edit it if you want a different day-to-day bar.
+              Used by the "days maintained" count on the dashboard. Defaults to the optimal
+              fasting/pre-meal ceiling (99 mg/dL) — edit it if you want a different day-to-day
+              bar.
             </span>
           </div>
           <div className="field-row">

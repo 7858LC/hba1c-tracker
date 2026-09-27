@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import type { AdherenceEntry, Protocol } from '../../types'
+import type { AdherenceEntry, GlucoseReading, Protocol } from '../../types'
 import { DAY_MS, toDateKey } from '../dates'
 import {
   BURNOUT_MIN_DAYS,
   DEGRADATION_ALERT_THRESHOLD,
   computeDurability,
 } from '../durability'
+
+function fastingReading(daysAgo: number, value: number, at = now): GlucoseReading {
+  const timestamp = at - daysAgo * DAY_MS
+  return {
+    context: 'fasting',
+    value,
+    timestamp,
+    source: 'manual',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }
+}
 
 const now = Date.parse('2025-06-15T12:00:00')
 
@@ -46,7 +58,7 @@ describe('computeDurability — rolling14Score', () => {
     const ruleIds = p.rules.map((r) => r.id)
     // 7 days fully logged (100%), 7 days unlogged (0%) -> average 50%
     const adherence = fullAdherenceRun(1, ruleIds, 0, 7)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.rolling14Score).toBeCloseTo(50, 5)
   })
 
@@ -54,7 +66,7 @@ describe('computeDurability — rolling14Score', () => {
     const p = protocol(30, 2)
     const ruleIds = p.rules.map((r) => r.id)
     const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.rolling14Score).toBeCloseTo(100, 5)
   })
 
@@ -63,7 +75,7 @@ describe('computeDurability — rolling14Score', () => {
     const ruleIds = p.rules.map((r) => r.id)
     // fully adherent on every day the protocol has actually existed
     const adherence = fullAdherenceRun(1, ruleIds, 0, 4)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.rolling14Score).toBeCloseTo(100, 5)
   })
 })
@@ -71,7 +83,7 @@ describe('computeDurability — rolling14Score', () => {
 describe('computeDurability — ninetyDayFloor', () => {
   it('is null when the protocol has fewer than 14 days of history', () => {
     const p = protocol(10, 2)
-    const result = computeDurability([], p, now)
+    const result = computeDurability([], p, [], now)
     expect(result.ninetyDayFloor).toBeNull()
   })
 
@@ -84,7 +96,7 @@ describe('computeDurability — ninetyDayFloor', () => {
       // days 38-51 unlogged (the dip) — no entries added
       ...fullAdherenceRun(1, ruleIds, 52, 38),
     ]
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.ninetyDayFloor).not.toBeNull()
     expect(result.ninetyDayFloor!).toBeLessThan(10) // the dip drags the floor near 0
     expect(result.rolling14Score).toBeCloseTo(100, 5) // current 14-day score looks fine
@@ -94,7 +106,7 @@ describe('computeDurability — ninetyDayFloor', () => {
     const p = protocol(90, 2)
     const ruleIds = p.rules.map((r) => r.id)
     const adherence = fullAdherenceRun(1, ruleIds, 0, 90)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.ninetyDayFloor).toBeCloseTo(100, 5)
   })
 })
@@ -102,7 +114,7 @@ describe('computeDurability — ninetyDayFloor', () => {
 describe('computeDurability — degradationAlert', () => {
   it('fires when the rolling 14-day score drops below the threshold', () => {
     const p = protocol(30, 2)
-    const result = computeDurability([], p, now) // nothing logged -> 0%
+    const result = computeDurability([], p, [], now) // nothing logged -> 0%
     expect(result.rolling14Score).toBeLessThan(DEGRADATION_ALERT_THRESHOLD)
     expect(result.degradationAlert).toBe(true)
   })
@@ -111,7 +123,7 @@ describe('computeDurability — degradationAlert', () => {
     const p = protocol(30, 2)
     const ruleIds = p.rules.map((r) => r.id)
     const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.degradationAlert).toBe(false)
   })
 })
@@ -121,7 +133,7 @@ describe('computeDurability — burnoutRisk', () => {
     const p = protocol(60, 2)
     const ruleIds = p.rules.map((r) => r.id)
     const adherence = fullAdherenceRun(1, ruleIds, 0, BURNOUT_MIN_DAYS - 1)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.burnoutRisk).toBe(false)
   })
 
@@ -129,7 +141,7 @@ describe('computeDurability — burnoutRisk', () => {
     const p = protocol(60, 2)
     const ruleIds = p.rules.map((r) => r.id)
     const adherence = fullAdherenceRun(1, ruleIds, 0, BURNOUT_MIN_DAYS)
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.burnoutRisk).toBe(true)
     expect(result.burnoutStreakDays).toBe(BURNOUT_MIN_DAYS)
   })
@@ -142,8 +154,58 @@ describe('computeDurability — burnoutRisk', () => {
       // a gap day at daysAgo=10 (unlogged -> 0%) breaks the streak
       ...fullAdherenceRun(1, ruleIds, 11, 50),
     ]
-    const result = computeDurability(adherence, p, now)
+    const result = computeDurability(adherence, p, [], now)
     expect(result.burnoutStreakDays).toBe(10)
     expect(result.burnoutRisk).toBe(false)
+  })
+})
+
+describe('computeDurability — glycemic blend', () => {
+  it('is unaffected by glucose readings on days with no target-context readings', () => {
+    const p = protocol(30, 2)
+    const ruleIds = p.rules.map((r) => r.id)
+    const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
+    // 'random'-context readings never carry an explicit target, so they
+    // should not move the score at all.
+    const readings: GlucoseReading[] = Array.from({ length: 14 }, (_, i) => ({
+      context: 'random',
+      value: 999,
+      timestamp: now - i * DAY_MS,
+      source: 'manual',
+      createdAt: now,
+      updatedAt: now,
+    }))
+    const result = computeDurability(adherence, p, readings, now)
+    expect(result.rolling14Score).toBeCloseTo(100, 5)
+  })
+
+  it('blends in-target fasting readings with a full checklist for a higher combined score', () => {
+    const p = protocol(30, 2)
+    const ruleIds = p.rules.map((r) => r.id)
+    const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
+    const readings = Array.from({ length: 14 }, (_, i) => fastingReading(i, 85)) // in target (70-99)
+    const result = computeDurability(adherence, p, readings, now)
+    expect(result.rolling14Score).toBeCloseTo(100, 5) // 100% checklist + 100% in-target -> 100
+  })
+
+  it('drags the score down when readings are logged but out of target', () => {
+    const p = protocol(30, 2)
+    const ruleIds = p.rules.map((r) => r.id)
+    const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
+    const readings = Array.from({ length: 14 }, (_, i) => fastingReading(i, 130)) // out of target
+    const result = computeDurability(adherence, p, readings, now)
+    expect(result.rolling14Score).toBeCloseTo(50, 5) // 100% checklist + 0% in-target -> 50
+  })
+
+  it('falls back to checklist-only on a day missing glucose data, not a phantom 0', () => {
+    const p = protocol(30, 2)
+    const ruleIds = p.rules.map((r) => r.id)
+    const adherence = fullAdherenceRun(1, ruleIds, 0, 14)
+    // Only half the days have a glucose reading; the other half should
+    // still score on checklist alone rather than being halved for
+    // "missing" glycemic data.
+    const readings = [0, 2, 4, 6, 8, 10, 12].map((d) => fastingReading(d, 85))
+    const result = computeDurability(adherence, p, readings, now)
+    expect(result.rolling14Score).toBeCloseTo(100, 5)
   })
 })

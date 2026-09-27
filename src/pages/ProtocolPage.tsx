@@ -13,7 +13,9 @@ export function ProtocolPage() {
   return (
     <div className="page">
       <ProtocolEditor />
-      {activeProtocol?.id != null && <StreakCard protocol={activeProtocol} />}
+      {activeProtocol?.id != null && (
+        <StreakCard protocol={activeProtocol} readings={readings} />
+      )}
       <AdherenceChecklist />
       <AdherenceVsEA1C readings={readings} />
     </div>

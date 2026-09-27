@@ -1,7 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db } from '../db/db'
+import { evaluateReading, hasExplicitTarget } from '../lib/glycemicTargets'
 import type { GlucoseContext, GlucoseReading } from '../types'
+
+function isOutOfTarget(reading: GlucoseReading): boolean {
+  return hasExplicitTarget(reading.context) && !evaluateReading(reading.value, reading.context).inTarget
+}
 
 const CONTEXT_LABELS: Record<GlucoseContext, string> = {
   fasting: 'Fasting',
@@ -77,9 +82,7 @@ function EditableRow({ reading }: { reading: GlucoseReading }) {
   return (
     <tr>
       <td>{formatWhen(reading.timestamp)}</td>
-      <td className={reading.value > 180 || reading.value < 70 ? 'value-flag' : ''}>
-        {reading.value}
-      </td>
+      <td className={isOutOfTarget(reading) ? 'value-flag' : ''}>{reading.value}</td>
       <td>{CONTEXT_LABELS[reading.context]}</td>
       <td>
         <button onClick={() => setEditing(true)} className="btn-small btn-ghost">

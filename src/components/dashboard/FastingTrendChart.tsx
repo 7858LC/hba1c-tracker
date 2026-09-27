@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -10,6 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import { dailyFastingSeries } from '../../lib/daysMaintained'
+import { FASTING_TARGET_HIGH, FASTING_TARGET_LOW } from '../../lib/glycemicTargets'
 import { visibleSupplementMarkers } from '../../lib/supplementMarkers'
 import type { GlucoseReading, SupplementChangeEntry } from '../../types'
 
@@ -72,7 +74,10 @@ export function FastingTrendChart({
             <YAxis
               tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
               stroke="var(--axis)"
-              domain={['dataMin - 5', 'dataMax + 5']}
+              domain={([dataMin, dataMax]: readonly [number, number]) => [
+                Math.min(dataMin, FASTING_TARGET_LOW) - 5,
+                Math.max(dataMax, FASTING_TARGET_HIGH) + 5,
+              ]}
               width={40}
             />
             <Tooltip
@@ -83,6 +88,13 @@ export function FastingTrendChart({
                 fontSize: 12,
               }}
               formatter={(v) => [`${v} mg/dL`, 'Fasting avg']}
+            />
+            <ReferenceArea
+              y1={FASTING_TARGET_LOW}
+              y2={FASTING_TARGET_HIGH}
+              fill="var(--status-good)"
+              fillOpacity={0.12}
+              stroke="none"
             />
             <ReferenceLine
               y={target}
@@ -117,7 +129,8 @@ export function FastingTrendChart({
       )}
       <p className="stat-caveat">
         Daily average of fasting-context readings only — a trend line, not a single number to
-        chase.
+        chase. Shaded band is the optimal-metabolic-health fasting/pre-meal target ({FASTING_TARGET_LOW}
+        -{FASTING_TARGET_HIGH} mg/dL), not the standard ADA diabetic-management range.
         {markers.length > 0 && ' Dashed vertical lines mark logged supplement changes.'}
       </p>
     </div>

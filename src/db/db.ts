@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import { ea1cToGlucose } from '../lib/ea1c'
+import { FASTING_TARGET_HIGH } from '../lib/glycemicTargets'
 import type {
   GlucoseReading,
   MealEntry,
@@ -44,10 +44,8 @@ class HbA1cDatabase extends Dexie {
 export const db = new HbA1cDatabase()
 
 export const DEFAULT_SETTINGS: Omit<AppSettings, 'id'> = {
-  targetRangeLow: 70,
-  targetRangeHigh: 180,
   goalHbA1c: 5.7,
-  targetFastingGlucose: Math.round(ea1cToGlucose(5.7)),
+  targetFastingGlucose: FASTING_TARGET_HIGH,
 }
 
 const SETTINGS_ID = 1

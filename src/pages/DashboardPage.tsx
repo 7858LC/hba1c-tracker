@@ -47,11 +47,7 @@ export function DashboardPage() {
         supplementChanges={supplementChanges}
       />
 
-      <TimeInRangeChart
-        readings={readings}
-        low={settings.targetRangeLow}
-        high={settings.targetRangeHigh}
-      />
+      <TimeInRangeChart readings={readings} />
 
       <CorrelationView meals={meals} exercise={exercise} sleep={sleep} readings={readings} />
     </div>
