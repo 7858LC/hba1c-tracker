@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { GlucoseReading, MealEntry, SleepEntry } from '../../types'
 import { DAY_MS } from '../dates'
-import { carbsVsNextDayGlucose, pearsonCorrelation, sleepVsNextDayGlucose } from '../correlation'
+import {
+  carbsVsNextDayGlucose,
+  pearsonCorrelation,
+  postMealVsSameDayCarbs,
+  sleepVsNextDayGlucose,
+} from '../correlation'
 
 describe('pearsonCorrelation', () => {
   it('is 1 for perfectly correlated data', () => {
@@ -39,6 +44,62 @@ describe('carbsVsNextDayGlucose', () => {
     expect(result.n).toBe(1)
     expect(result.points[0].x).toBe(200)
     expect(result.points[0].y).toBe(160)
+  })
+})
+
+describe('postMealVsSameDayCarbs', () => {
+  it('pairs a day\'s carbs with THAT SAME day\'s average post-meal glucose, not the next day', () => {
+    const day0 = Date.parse('2025-01-01T12:00:00Z')
+    const day1 = day0 + DAY_MS
+
+    const meals: MealEntry[] = [
+      { timestamp: day0, carbsGrams: 90, mealType: 'dinner', createdAt: day0, updatedAt: day0 },
+    ]
+    const readings: GlucoseReading[] = [
+      {
+        timestamp: day0,
+        value: 150,
+        context: 'post_meal_1h',
+        source: 'manual',
+        createdAt: day0,
+        updatedAt: day0,
+      },
+      {
+        timestamp: day0,
+        value: 130,
+        context: 'post_meal_2h',
+        source: 'manual',
+        createdAt: day0,
+        updatedAt: day0,
+      },
+      // a next-day post-meal reading must NOT be paired with day0's carbs
+      {
+        timestamp: day1,
+        value: 999,
+        context: 'post_meal_1h',
+        source: 'manual',
+        createdAt: day1,
+        updatedAt: day1,
+      },
+    ]
+
+    const result = postMealVsSameDayCarbs(meals, readings)
+    expect(result.n).toBe(1)
+    expect(result.points[0].x).toBe(90)
+    expect(result.points[0].y).toBeCloseTo(140, 5) // (150 + 130) / 2
+  })
+
+  it('ignores fasting/pre_meal/random readings for the post-meal average', () => {
+    const day0 = Date.parse('2025-01-01T12:00:00Z')
+    const meals: MealEntry[] = [
+      { timestamp: day0, carbsGrams: 50, mealType: 'lunch', createdAt: day0, updatedAt: day0 },
+    ]
+    const readings: GlucoseReading[] = [
+      { timestamp: day0, value: 999, context: 'fasting', source: 'manual', createdAt: day0, updatedAt: day0 },
+      { timestamp: day0, value: 999, context: 'random', source: 'manual', createdAt: day0, updatedAt: day0 },
+    ]
+    const result = postMealVsSameDayCarbs(meals, readings)
+    expect(result.n).toBe(0)
   })
 })
 

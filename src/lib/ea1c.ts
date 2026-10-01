@@ -13,6 +13,20 @@ export const ADAG_OFFSET = 46.7
 export const ADAG_DIVISOR = 28.7
 export const ADAG_ERROR_MARGIN = 0.5
 
+/**
+ * Display-only threshold, NOT part of the ADAG calculation above. Monnier
+ * et al. (Diabetes Care 2003, and replications) found postprandial glucose
+ * is the dominant contributor to HbA1c at good-to-moderate control
+ * (~70% relative contribution below this threshold), with fasting
+ * glucose's share rising only as control worsens. Used only to decide
+ * whether to show a contextual note near the eA1C number — never to
+ * reweight the formula itself. Not unanimous in the literature (at least
+ * one CGM-based study in type 1 diabetics found fasting explained more
+ * variance even at good control), so treat any display built on this as a
+ * rebalancing of emphasis, not a settled fact.
+ */
+export const MONNIER_THRESHOLD = 7.3
+
 export function glucoseToEA1C(avgGlucoseMgDl: number): number {
   return (avgGlucoseMgDl + ADAG_OFFSET) / ADAG_DIVISOR
 }

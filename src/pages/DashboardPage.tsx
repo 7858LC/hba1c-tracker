@@ -2,6 +2,7 @@ import { CorrelationView } from '../components/dashboard/CorrelationView'
 import { DaysMaintainedCard } from '../components/dashboard/DaysMaintainedCard'
 import { EA1CCard } from '../components/dashboard/EA1CCard'
 import { FastingTrendChart } from '../components/dashboard/FastingTrendChart'
+import { PostMealTrendChart } from '../components/dashboard/PostMealTrendChart'
 import { TimeInRangeChart } from '../components/dashboard/TimeInRangeChart'
 import { TrendChart } from '../components/dashboard/TrendChart'
 import { VariabilityCard } from '../components/dashboard/VariabilityCard'
@@ -46,6 +47,8 @@ export function DashboardPage() {
         target={settings.targetFastingGlucose}
         supplementChanges={supplementChanges}
       />
+
+      <PostMealTrendChart readings={readings} supplementChanges={supplementChanges} />
 
       <TimeInRangeChart readings={readings} />
 

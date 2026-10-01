@@ -8,9 +8,11 @@ import {
   YAxis,
 } from 'recharts'
 import { ResponsiveContainer } from 'recharts'
+import { computeRelativeContribution } from '../../lib/contribution'
 import {
   carbsVsNextDayGlucose,
   exerciseVsNextDayGlucose,
+  postMealVsSameDayCarbs,
   sleepVsNextDayGlucose,
 } from '../../lib/correlation'
 import type { ExerciseEntry, GlucoseReading, MealEntry, SleepEntry } from '../../types'
@@ -87,10 +89,15 @@ export function CorrelationView({
     [exercise, readings],
   )
   const sleepCorr = useMemo(() => sleepVsNextDayGlucose(sleep, readings), [sleep, readings])
+  const postMealCorr = useMemo(
+    () => postMealVsSameDayCarbs(meals, readings),
+    [meals, readings],
+  )
+  const contribution = useMemo(() => computeRelativeContribution(readings), [readings])
 
   return (
     <div className="card">
-      <h2>Diet/exercise/sleep vs next-day glucose</h2>
+      <h2>Diet/exercise/sleep vs glucose</h2>
       <p className="hint">
         Plain paired-day correlation, not a model — every point below is a real day's data so
         you can audit it yourself.
@@ -123,6 +130,7 @@ export function CorrelationView({
         </div>
         <div>
           <h3>Sleep → next-morning fasting glucose</h3>
+          <p className="hint">Dawn-phenomenon / hepatic-glucose-output check — independent value regardless of HbA1c weighting.</p>
           <MiniScatter
             points={sleepCorr.points}
             xLabel={sleepCorr.xLabel}
@@ -133,7 +141,60 @@ export function CorrelationView({
             n={sleepCorr.n} paired nights — {interpretR(sleepCorr.r)}
           </p>
         </div>
+        <div>
+          <h3>Carbs → same-day post-meal glucose</h3>
+          <p className="hint">
+            Postprandial readings are the likely dominant HbA1c driver at your current range —
+            same billing as the panels above, not an afterthought.
+          </p>
+          <MiniScatter
+            points={postMealCorr.points}
+            xLabel={postMealCorr.xLabel}
+            yLabel={postMealCorr.yLabel}
+            color="var(--series-4)"
+          />
+          <p className="stat-caveat">
+            n={postMealCorr.n} paired days — {interpretR(postMealCorr.r)}
+          </p>
+        </div>
       </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+
+      <h3>Fasting vs. postprandial — your own data</h3>
+      {contribution.eligible ? (
+        <>
+          <div className="tir-bar">
+            <div
+              style={{ width: `${contribution.fastingPct}%`, background: 'var(--series-2)' }}
+              title={`Fasting/pre-meal: ${contribution.fastingPct!.toFixed(0)}%`}
+            />
+            <div
+              style={{ width: `${contribution.postprandialPct}%`, background: 'var(--series-4)' }}
+              title={`Post-meal: ${contribution.postprandialPct!.toFixed(0)}%`}
+            />
+          </div>
+          <div className="tir-legend">
+            <span>
+              <span className="tir-legend-swatch" style={{ background: 'var(--series-2)' }} />
+              Fasting/pre-meal: {contribution.fastingPct!.toFixed(0)}%
+            </span>
+            <span>
+              <span className="tir-legend-swatch" style={{ background: 'var(--series-4)' }} />
+              Post-meal: {contribution.postprandialPct!.toFixed(0)}%
+            </span>
+          </div>
+          <p className="stat-caveat">
+            Approximate — each side's share of how far your own {contribution.windowDays}-day
+            average sits above a {100} mg/dL reference, not a validated clinical calculation and
+            not the published population percentages applied to you. Based on{' '}
+            {contribution.fastingReadingCount} fasting/pre-meal and{' '}
+            {contribution.postprandialReadingCount} post-meal readings.
+          </p>
+        </>
+      ) : (
+        <p className="empty-state">{contribution.reason}</p>
+      )}
     </div>
   )
 }

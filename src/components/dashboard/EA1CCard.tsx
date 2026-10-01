@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ADAG_ERROR_MARGIN, calculateGatedEA1C } from '../../lib/ea1c'
+import { ADAG_ERROR_MARGIN, calculateGatedEA1C, MONNIER_THRESHOLD } from '../../lib/ea1c'
 import type { GlucoseReading } from '../../types'
 
 const WINDOWS = [30, 60, 90] as const
@@ -57,6 +57,12 @@ export function EA1CCard({ readings }: { readings: GlucoseReading[] }) {
               {windowDays} days
               {!result.isFullWindow ? ' — limited data, treat as a rough estimate' : ''}
             </span>
+            {result.value < MONNIER_THRESHOLD && (
+              <span className="stat-caveat">
+                At your current range, post-meal readings typically contribute more to this
+                number than fasting.
+              </span>
+            )}
           </>
         ) : result.avgGlucose != null ? (
           <>

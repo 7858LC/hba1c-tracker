@@ -128,6 +128,40 @@ export function exerciseVsNextDayGlucose(
  * physiological link (dawn phenomenon, overnight cortisol) is to the next
  * fasting reading, not to whatever glucose gets logged that calendar day.
  */
+/**
+ * Correlates same-day carb intake against that SAME day's average
+ * post-meal (1hr + 2hr combined) glucose — not a next-day lag like the
+ * other correlations here, since post-meal glucose response to a meal is
+ * same-day physiology; the post-meal reading already IS the lagged
+ * indicator relative to the meal itself.
+ */
+export function postMealVsSameDayCarbs(
+  meals: MealEntry[],
+  readings: GlucoseReading[],
+): LagCorrelationResult {
+  const carbsByDay = dailySum(meals, (m: MealEntry) => m.carbsGrams)
+  const postMealByDay = dailyAverage(
+    readings.filter((r) => r.context === 'post_meal_1h' || r.context === 'post_meal_2h'),
+    (r: GlucoseReading) => r.value,
+  )
+  const points: LagCorrelationPoint[] = []
+  for (const [dateKey, carbs] of carbsByDay) {
+    const postMeal = postMealByDay.get(dateKey)
+    if (postMeal != null) points.push({ date: dateKey, x: carbs, y: postMeal })
+  }
+  points.sort((a, b) => a.date.localeCompare(b.date))
+  return {
+    r: pearsonCorrelation(
+      points.map((p) => p.x),
+      points.map((p) => p.y),
+    ),
+    n: points.length,
+    points,
+    xLabel: 'Carbs (g) that day',
+    yLabel: 'Avg post-meal glucose (mg/dL) same day',
+  }
+}
+
 export function sleepVsNextDayGlucose(
   sleep: SleepEntry[],
   readings: GlucoseReading[],
