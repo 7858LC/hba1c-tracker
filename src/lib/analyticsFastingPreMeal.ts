@@ -1,4 +1,4 @@
-import type { GlucoseReading, SleepEntry } from '../types'
+import type { GlucoseReading, HydrationStatus, SleepEntry } from '../types'
 import { toDateKey } from './dates'
 import { MIN_FASTING_READINGS } from './dataQuality'
 import { findRelevantWake, minutesAfterWaking } from './elapsedTime'
@@ -129,6 +129,36 @@ export function computeFastingAnalytics(
     avgMinutesAfterWaking: mean(wakeMinutes),
     minutesAfterWakingCount: wakeMinutes.length,
   }
+}
+
+export const MIN_HYDRATION_BUCKET_READINGS = 5
+const HYDRATION_STATUSES: HydrationStatus[] = ['low', 'normal', 'high']
+
+export interface HydrationBucketStats {
+  status: HydrationStatus
+  eligible: boolean
+  readingCount: number
+  mean: number | null
+}
+
+/**
+ * Fasting glucose grouped by the hydration status self-reported at THAT
+ * reading (the optional quick-entry flag) — not a separate tracked
+ * behavior, just whatever was already captured when the reading was
+ * logged. A crude 3-level self-rating, so treat any signal here as weak
+ * evidence at best, never on the level of the sleep/exercise sections.
+ */
+export function computeFastingByHydration(readings: GlucoseReading[]): HydrationBucketStats[] {
+  const fasting = readings.filter((r) => r.context === 'fasting')
+  return HYDRATION_STATUSES.map((status) => {
+    const values = fasting.filter((r) => r.hydrationStatus === status).map((r) => r.value)
+    return {
+      status,
+      eligible: values.length >= MIN_HYDRATION_BUCKET_READINGS,
+      readingCount: values.length,
+      mean: mean(values),
+    }
+  })
 }
 
 export interface PreMealAnalytics {

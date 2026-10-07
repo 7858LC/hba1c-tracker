@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import type { GlucoseReading, SleepEntry } from '../../types'
 import {
   computeFastingAnalytics,
+  computeFastingByHydration,
   computePreMealAnalytics,
   computeTrend,
   MIN_FASTING_READINGS,
+  MIN_HYDRATION_BUCKET_READINGS,
   MIN_PRE_MEAL_READINGS,
 } from '../analyticsFastingPreMeal'
 
@@ -93,6 +95,52 @@ describe('computeFastingAnalytics', () => {
     const result = computeFastingAnalytics(readings, sleepEntries)
     expect(result.minutesAfterWakingCount).toBe(1)
     expect(result.avgMinutesAfterWaking).toBe(10)
+  })
+})
+
+describe('computeFastingByHydration', () => {
+  function hydratedReading(value: number, timestamp: number, hydrationStatus: 'low' | 'normal' | 'high'): GlucoseReading {
+    return { ...reading(value, timestamp, 'fasting'), hydrationStatus }
+  }
+
+  it('returns all 3 statuses even with no data', () => {
+    const result = computeFastingByHydration([])
+    expect(result.map((b) => b.status)).toEqual(['low', 'normal', 'high'])
+  })
+
+  it('ignores fasting readings with no hydration status recorded', () => {
+    const readings = [reading(100, Date.now(), 'fasting')] // no hydrationStatus
+    const result = computeFastingByHydration(readings)
+    expect(result.every((b) => b.readingCount === 0)).toBe(true)
+  })
+
+  it('ignores non-fasting readings even if tagged with hydration status', () => {
+    const now = Date.now()
+    const readings = [{ ...hydratedReading(100, now, 'low'), context: 'pre_meal' as const }]
+    const result = computeFastingByHydration(readings)
+    expect(result.every((b) => b.readingCount === 0)).toBe(true)
+  })
+
+  it('groups fasting readings by their own hydration status', () => {
+    const now = Date.now()
+    const readings = [
+      hydratedReading(110, now, 'low'),
+      hydratedReading(100, now + DAY_MS, 'normal'),
+      hydratedReading(95, now + 2 * DAY_MS, 'high'),
+    ]
+    const result = computeFastingByHydration(readings)
+    expect(result.find((b) => b.status === 'low')!.mean).toBe(110)
+    expect(result.find((b) => b.status === 'normal')!.mean).toBe(100)
+    expect(result.find((b) => b.status === 'high')!.mean).toBe(95)
+  })
+
+  it('marks a bucket eligible once it meets the minimum', () => {
+    const now = Date.now()
+    const readings = Array.from({ length: MIN_HYDRATION_BUCKET_READINGS }, (_, i) =>
+      hydratedReading(100 + i, now + i * DAY_MS, 'low'),
+    )
+    const result = computeFastingByHydration(readings)
+    expect(result.find((b) => b.status === 'low')!.eligible).toBe(true)
   })
 })
 

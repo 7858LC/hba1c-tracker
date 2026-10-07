@@ -1,5 +1,6 @@
 import {
   computeFastingAnalytics,
+  computeFastingByHydration,
   computePreMealAnalytics,
   MIN_FASTING_READINGS,
   MIN_PRE_MEAL_READINGS,
@@ -32,6 +33,8 @@ export function FastingPreMealCard({
 }) {
   const fasting = computeFastingAnalytics(readings, sleepEntries)
   const preMeal = computePreMealAnalytics(readings)
+  const hydrationBuckets = computeFastingByHydration(readings)
+  const eligibleHydrationBuckets = hydrationBuckets.filter((b) => b.eligible)
 
   return (
     <div className="card">
@@ -81,6 +84,23 @@ export function FastingPreMealCard({
             {fasting.minutesAfterWakingCount > 0 &&
               ` Average ${fasting.avgMinutesAfterWaking?.toFixed(0)} min after waking, based on ${fasting.minutesAfterWakingCount} readings with a known wake time.`}
           </p>
+
+          {eligibleHydrationBuckets.length > 0 && (
+            <>
+              <h3 style={{ marginTop: 8 }}>By self-reported hydration</h3>
+              <div className="tir-legend">
+                {eligibleHydrationBuckets.map((b) => (
+                  <span key={b.status}>
+                    {b.status}: {b.mean?.toFixed(0)} mg/dL (n={b.readingCount})
+                  </span>
+                ))}
+              </div>
+              <p className="stat-caveat">
+                A crude 3-level self-rating logged at each reading — treat any difference here as
+                weak evidence at best, not on the level of the sleep/exercise sections.
+              </p>
+            </>
+          )}
         </>
       )}
 
