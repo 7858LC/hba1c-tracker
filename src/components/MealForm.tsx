@@ -15,6 +15,11 @@ export function MealForm() {
   const [mealType, setMealType] = useState<MealType>('breakfast')
   const [description, setDescription] = useState('')
   const [timestampStr, setTimestampStr] = useState(nowLocal())
+  const [showMore, setShowMore] = useState(false)
+  const [fiber, setFiber] = useState('')
+  const [protein, setProtein] = useState('')
+  const [fat, setFat] = useState('')
+  const [calories, setCalories] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -32,11 +37,19 @@ export function MealForm() {
       carbsGrams: numeric,
       mealType,
       description: description || undefined,
+      fiberGrams: fiber ? Number(fiber) : undefined,
+      proteinGrams: protein ? Number(protein) : undefined,
+      fatGrams: fat ? Number(fat) : undefined,
+      calories: calories ? Number(calories) : undefined,
       createdAt: now,
       updatedAt: now,
     })
     setCarbs('')
     setDescription('')
+    setFiber('')
+    setProtein('')
+    setFat('')
+    setCalories('')
     setTimestampStr(nowLocal())
   }
 
@@ -86,9 +99,35 @@ export function MealForm() {
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g. oatmeal + berries"
+          placeholder="e.g. eggs, avocado, spinach"
         />
       </div>
+
+      <button type="button" className="btn-ghost btn-small" onClick={() => setShowMore((s) => !s)}>
+        {showMore ? 'Hide macros' : 'Add macros (optional)'}
+      </button>
+
+      {showMore && (
+        <div className="entry-form-nested">
+          <div className="field-row">
+            <label htmlFor="meal-fiber">Fiber (g, optional)</label>
+            <input id="meal-fiber" type="number" inputMode="numeric" value={fiber} onChange={(e) => setFiber(e.target.value)} />
+          </div>
+          <div className="field-row">
+            <label htmlFor="meal-protein">Protein (g, optional)</label>
+            <input id="meal-protein" type="number" inputMode="numeric" value={protein} onChange={(e) => setProtein(e.target.value)} />
+          </div>
+          <div className="field-row">
+            <label htmlFor="meal-fat">Fat (g, optional)</label>
+            <input id="meal-fat" type="number" inputMode="numeric" value={fat} onChange={(e) => setFat(e.target.value)} />
+          </div>
+          <div className="field-row">
+            <label htmlFor="meal-calories">Calories (optional)</label>
+            <input id="meal-calories" type="number" inputMode="numeric" value={calories} onChange={(e) => setCalories(e.target.value)} />
+          </div>
+        </div>
+      )}
+
       {error && <p className="form-error">{error}</p>}
       <button type="submit" className="btn-primary">
         Save meal

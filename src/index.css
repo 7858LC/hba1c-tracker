@@ -229,6 +229,16 @@ select {
   max-width: 420px;
 }
 
+.entry-form-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--page);
+}
+
 .field-row {
   display: flex;
   flex-direction: column;

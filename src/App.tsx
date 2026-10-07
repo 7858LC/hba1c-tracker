@@ -2,18 +2,27 @@ import { useState } from 'react'
 import { useNeedsProtocolLog } from './hooks/data'
 import { DashboardPage } from './pages/DashboardPage'
 import { GlucosePage } from './pages/GlucosePage'
+import { GlucoseProtocolsPage } from './pages/GlucoseProtocolsPage'
 import { LifestylePage } from './pages/LifestylePage'
 import { ProjectionPage } from './pages/ProjectionPage'
 import { ProtocolPage } from './pages/ProtocolPage'
 import { SettingsPage } from './pages/SettingsPage'
 
-type Tab = 'log' | 'lifestyle' | 'dashboard' | 'protocol' | 'projection' | 'settings'
+type Tab =
+  | 'log'
+  | 'lifestyle'
+  | 'dashboard'
+  | 'protocol'
+  | 'glucoseProtocols'
+  | 'projection'
+  | 'settings'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'log', label: 'Log glucose' },
   { id: 'lifestyle', label: 'Diet / exercise / sleep' },
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'protocol', label: 'Protocol' },
+  { id: 'glucoseProtocols', label: 'Glucose protocols' },
   { id: 'projection', label: 'Projection' },
   { id: 'settings', label: 'Settings' },
 ]
@@ -51,6 +60,7 @@ function App() {
         {tab === 'lifestyle' && <LifestylePage />}
         {tab === 'dashboard' && <DashboardPage />}
         {tab === 'protocol' && <ProtocolPage />}
+        {tab === 'glucoseProtocols' && <GlucoseProtocolsPage />}
         {tab === 'projection' && <ProjectionPage />}
         {tab === 'settings' && <SettingsPage />}
       </main>

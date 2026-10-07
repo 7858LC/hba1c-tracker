@@ -1,4 +1,5 @@
 import { CorrelationView } from '../components/dashboard/CorrelationView'
+import { DataQualityCard } from '../components/dashboard/DataQualityCard'
 import { DaysMaintainedCard } from '../components/dashboard/DaysMaintainedCard'
 import { EA1CCard } from '../components/dashboard/EA1CCard'
 import { FastingTrendChart } from '../components/dashboard/FastingTrendChart'
@@ -53,6 +54,13 @@ export function DashboardPage() {
       <TimeInRangeChart readings={readings} />
 
       <CorrelationView meals={meals} exercise={exercise} sleep={sleep} readings={readings} />
+
+      <DataQualityCard
+        readings={readings}
+        meals={meals}
+        sleepEntries={sleep}
+        exerciseEntries={exercise}
+      />
     </div>
   )
 }

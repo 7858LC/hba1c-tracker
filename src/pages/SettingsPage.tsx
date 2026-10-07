@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { ImportBackup } from '../components/ImportBackup'
+import { LabA1cForm } from '../components/LabA1cForm'
+import { LabA1cLog } from '../components/LabA1cLog'
 import { db, saveSettings } from '../db/db'
 import { exportAllDataAsJson, exportGlucoseReadingsAsCsv } from '../lib/exportAll'
-import { useSettings } from '../hooks/data'
+import { useAllReadings, useSettings } from '../hooks/data'
 
 export function SettingsPage() {
   const settings = useSettings()
+  const readings = useAllReadings()
   const [goal, setGoal] = useState('')
   const [targetFasting, setTargetFasting] = useState('')
   const [labHbA1c, setLabHbA1c] = useState('')
@@ -47,6 +50,10 @@ export function SettingsPage() {
       db.sleep.clear(),
       db.protocols.clear(),
       db.adherence.clear(),
+      db.supplementChanges.clear(),
+      db.protocolRuns.clear(),
+      db.labA1cEntries.clear(),
+      db.duplicateReviews.clear(),
     ])
   }
 
@@ -118,6 +125,17 @@ export function SettingsPage() {
       <section className="card">
         <h2>Restore from backup</h2>
         <ImportBackup />
+      </section>
+
+      <section className="card">
+        <h2>Lab A1c history</h2>
+        <p className="hint">
+          Separate from the single "most recent lab HbA1c" field above (kept for the existing
+          trend-chart reference line) — this is a full history for comparing meter-derived GMI
+          against multiple real draws over time.
+        </p>
+        <LabA1cForm />
+        <LabA1cLog readings={readings} />
       </section>
 
       <section className="card">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { db } from '../db/db'
+import type { StressLevel } from '../types'
 
 function today(): string {
   const d = new Date()
@@ -7,11 +8,23 @@ function today(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
+/** Defaults the wake-time picker to the morning after `dateStr`, 06:30. */
+function defaultWakeTimeFor(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() + 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T06:30`
+}
+
 export function SleepForm() {
   const [date, setDate] = useState(today())
   const [durationHours, setDurationHours] = useState('')
   const [durationMinutesPart, setDurationMinutesPart] = useState('')
   const [wasoMinutes, setWasoMinutes] = useState('')
+  const [wakeTimeStr, setWakeTimeStr] = useState('')
+  const [sleepQuality, setSleepQuality] = useState('')
+  const [sleepScore, setSleepScore] = useState('')
+  const [awakeningsCount, setAwakeningsCount] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -41,10 +54,24 @@ export function SleepForm() {
     }
 
     const now = Date.now()
-    await db.sleep.add({ date, durationMinutes, wasoMinutes: waso, createdAt: now, updatedAt: now })
+    await db.sleep.add({
+      date,
+      durationMinutes,
+      wasoMinutes: waso,
+      wakeTimestamp: wakeTimeStr ? new Date(wakeTimeStr).getTime() : undefined,
+      sleepQuality: sleepQuality ? (Number(sleepQuality) as StressLevel) : undefined,
+      sleepScore: sleepScore ? Number(sleepScore) : undefined,
+      awakeningsCount: awakeningsCount ? Number(awakeningsCount) : undefined,
+      createdAt: now,
+      updatedAt: now,
+    })
     setDurationHours('')
     setDurationMinutesPart('')
     setWasoMinutes('')
+    setWakeTimeStr('')
+    setSleepQuality('')
+    setSleepScore('')
+    setAwakeningsCount('')
     setDate(today())
   }
 
@@ -107,6 +134,60 @@ export function SleepForm() {
           value={wasoMinutes}
           onChange={(e) => setWasoMinutes(e.target.value)}
           placeholder="e.g. 15"
+        />
+      </div>
+
+      <div className="field-row">
+        <label htmlFor="sleep-wake-time">Wake time (optional, but needed for waking-glucose analysis)</label>
+        <input
+          id="sleep-wake-time"
+          type="datetime-local"
+          value={wakeTimeStr}
+          onChange={(e) => setWakeTimeStr(e.target.value)}
+          onFocus={() => {
+            if (!wakeTimeStr) setWakeTimeStr(defaultWakeTimeFor(date))
+          }}
+        />
+        <span className="hint">
+          The actual moment you woke up — this is what "minutes after waking" is calculated
+          against for T0/T30/T60 readings. Without it, waking-relative analysis isn't possible
+          for this night.
+        </span>
+      </div>
+
+      <div className="field-row">
+        <label htmlFor="sleep-quality">Sleep quality (1-5, optional)</label>
+        <select id="sleep-quality" value={sleepQuality} onChange={(e) => setSleepQuality(e.target.value)}>
+          <option value="">Not recorded</option>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="field-row">
+        <label htmlFor="sleep-score">Device/app sleep score (optional)</label>
+        <input
+          id="sleep-score"
+          type="number"
+          inputMode="numeric"
+          value={sleepScore}
+          onChange={(e) => setSleepScore(e.target.value)}
+          placeholder="e.g. 82"
+        />
+      </div>
+
+      <div className="field-row">
+        <label htmlFor="sleep-awakenings">Awakenings count (optional)</label>
+        <input
+          id="sleep-awakenings"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={awakeningsCount}
+          onChange={(e) => setAwakeningsCount(e.target.value)}
         />
       </div>
 
