@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNeedsProtocolLog } from './hooks/data'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { GlucosePage } from './pages/GlucosePage'
 import { GlucoseProtocolsPage } from './pages/GlucoseProtocolsPage'
@@ -12,6 +13,7 @@ type Tab =
   | 'log'
   | 'lifestyle'
   | 'dashboard'
+  | 'analytics'
   | 'protocol'
   | 'glucoseProtocols'
   | 'projection'
@@ -21,6 +23,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'log', label: 'Log glucose' },
   { id: 'lifestyle', label: 'Diet / exercise / sleep' },
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'analytics', label: 'Analytics' },
   { id: 'protocol', label: 'Protocol' },
   { id: 'glucoseProtocols', label: 'Glucose protocols' },
   { id: 'projection', label: 'Projection' },
@@ -59,6 +62,7 @@ function App() {
         {tab === 'log' && <GlucosePage />}
         {tab === 'lifestyle' && <LifestylePage />}
         {tab === 'dashboard' && <DashboardPage />}
+        {tab === 'analytics' && <AnalyticsPage />}
         {tab === 'protocol' && <ProtocolPage />}
         {tab === 'glucoseProtocols' && <GlucoseProtocolsPage />}
         {tab === 'projection' && <ProjectionPage />}
