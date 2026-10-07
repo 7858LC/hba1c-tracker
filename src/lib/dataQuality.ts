@@ -25,24 +25,31 @@ export interface DataQualityItem {
   detail: string
 }
 
+// T0/T30/T60 minute-after-waking windows, shared with analyticsAwakening.ts
+// so "is this day usable for awakening analysis" and "what are its actual
+// T0/T30/T60 values" use the exact same definition of each window.
+export const T0_WINDOW: [number, number] = [-5, 10]
+export const T30_WINDOW: [number, number] = [20, 40]
+export const T60_WINDOW: [number, number] = [50, 70]
+
 /** Distinct sleep nights with readings close to T0 (~waking), T30, and T60 all present. */
-function awakeningTripleDays(readings: GlucoseReading[], sleepEntries: SleepEntry[]): number {
+export function awakeningTripleDays(readings: GlucoseReading[], sleepEntries: SleepEntry[]): number {
   let count = 0
   for (const s of sleepEntries) {
     if (s.wakeTimestamp == null) continue
     const minutesList = readings
       .map((r) => minutesAfterWaking(r, s))
       .filter((m): m is number => m != null)
-    const hasT0 = minutesList.some((m) => m >= -5 && m <= 10)
-    const hasT30 = minutesList.some((m) => m >= 20 && m <= 40)
-    const hasT60 = minutesList.some((m) => m >= 50 && m <= 70)
+    const hasT0 = minutesList.some((m) => m >= T0_WINDOW[0] && m <= T0_WINDOW[1])
+    const hasT30 = minutesList.some((m) => m >= T30_WINDOW[0] && m <= T30_WINDOW[1])
+    const hasT60 = minutesList.some((m) => m >= T60_WINDOW[0] && m <= T60_WINDOW[1])
     if (hasT0 && hasT30 && hasT60) count++
   }
   return count
 }
 
 /** Nights with a known wake time AND a fasting reading within 4h of waking to pair against it. */
-function sleepPairedNights(readings: GlucoseReading[], sleepEntries: SleepEntry[]): number {
+export function sleepPairedNights(readings: GlucoseReading[], sleepEntries: SleepEntry[]): number {
   const fasting = readings.filter((r) => r.context === 'fasting')
   return sleepEntries.filter((s) => {
     if (s.wakeTimestamp == null) return false
