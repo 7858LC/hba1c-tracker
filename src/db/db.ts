@@ -10,6 +10,9 @@ import type {
   AdherenceEntry,
   AppSettings,
   SupplementChangeEntry,
+  GlucoseProtocolRun,
+  LabA1cEntry,
+  DuplicateReview,
 } from '../types'
 
 class HbA1cDatabase extends Dexie {
@@ -22,6 +25,9 @@ class HbA1cDatabase extends Dexie {
   adherence!: EntityTable<AdherenceEntry, 'id'>
   settings!: EntityTable<AppSettings, 'id'>
   supplementChanges!: EntityTable<SupplementChangeEntry, 'id'>
+  protocolRuns!: EntityTable<GlucoseProtocolRun, 'id'>
+  labA1cEntries!: EntityTable<LabA1cEntry, 'id'>
+  duplicateReviews!: EntityTable<DuplicateReview, 'id'>
 
   constructor() {
     super('hba1c-tracker')
@@ -37,6 +43,15 @@ class HbA1cDatabase extends Dexie {
     })
     this.version(2).stores({
       supplementChanges: '++id, date',
+    })
+    // v3: longitudinal metabolic analysis upgrade — meal/protocol linking,
+    // lab A1c history, duplicate review. All additive; no v1/v2 store is
+    // touched, so existing data and indexes are untouched.
+    this.version(3).stores({
+      readings: '++id, timestamp, context, source, mealId, protocolRunId',
+      protocolRuns: '++id, type, active',
+      labA1cEntries: '++id, labDate',
+      duplicateReviews: '++id, pairKey',
     })
   }
 }

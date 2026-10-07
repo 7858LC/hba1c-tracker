@@ -126,13 +126,51 @@ export function buildReadingsFromRows(
   })
 }
 
+/**
+ * A reading's local wall-clock time, formatted without a timezone suffix
+ * (deliberately NOT a real UTC instant) — reconstructed from its stored
+ * UTC timestamp plus the offset captured at entry time, so it reflects
+ * where/when the reading was actually taken rather than whatever timezone
+ * this export happens to run in. Blank when no offset was captured.
+ */
+function toLocalIsoString(timestamp: number, offsetMinutes: number | undefined): string {
+  if (offsetMinutes == null) return ''
+  const shifted = new Date(timestamp + offsetMinutes * 60_000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:${pad(shifted.getUTCSeconds())}`
+}
+
+/**
+ * Column order mirrors the data model, but compatibility never depends on
+ * order — Papa.parse/the importer are header-NAME keyed, not positional.
+ * The original 5 columns (timestamp, value_mgdl, context, source, note)
+ * keep their exact names so an old export of this file is still a valid
+ * input anywhere that expects them; everything else is additive. See
+ * DATA_DICTIONARY.md for what each column means.
+ */
 export function readingsToCsv(readings: GlucoseReading[]): string {
   return Papa.unparse(
     readings.map((r) => ({
+      measurement_id: r.id ?? '',
       timestamp: new Date(r.timestamp).toISOString(),
+      timestamp_local: toLocalIsoString(r.timestamp, r.timezoneOffsetMinutes),
+      timezone_offset_minutes: r.timezoneOffsetMinutes ?? '',
       value_mgdl: r.value,
       context: r.context,
       source: r.source,
+      device_id: r.deviceId ?? '',
+      meal_id: r.mealId ?? '',
+      target_post_meal_minutes: r.targetPostMealMinutes ?? '',
+      protocol_run_id: r.protocolRunId ?? '',
+      protocol_role: r.protocolRole ?? '',
+      caffeine_before_measurement: r.caffeineBeforeMeasurement ?? '',
+      alcohol_previous_24h: r.alcoholPrevious24h ?? '',
+      stress_level_1_5: r.stressLevel ?? '',
+      illness_flag: r.illnessFlag ?? '',
+      medications_taken: r.medicationsTaken ?? '',
+      supplements_taken: r.supplementsTaken ?? '',
+      hydration_status: r.hydrationStatus ?? '',
+      symptoms: r.symptoms ?? '',
       note: r.note ?? '',
     })),
   )

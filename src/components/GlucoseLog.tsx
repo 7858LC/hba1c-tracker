@@ -13,6 +13,12 @@ const CONTEXT_LABELS: Record<GlucoseContext, string> = {
   pre_meal: 'Pre-meal',
   post_meal_1h: 'Post-meal (1h)',
   post_meal_2h: 'Post-meal (2h)',
+  post_meal: 'Post-meal',
+  waking: 'Waking',
+  bedtime: 'Bedtime',
+  overnight: 'Overnight',
+  exercise: 'Exercise',
+  symptom_driven: 'Symptom-driven',
   random: 'Random',
 }
 

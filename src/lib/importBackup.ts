@@ -2,12 +2,16 @@ import { db } from '../db/db'
 import type {
   AdherenceEntry,
   AppSettings,
+  DuplicateReview,
   ExerciseEntry,
   FastingWindowEntry,
+  GlucoseProtocolRun,
   GlucoseReading,
+  LabA1cEntry,
   MealEntry,
   Protocol,
   SleepEntry,
+  SupplementChangeEntry,
 } from '../types'
 
 export interface BackupPayload {
@@ -20,6 +24,10 @@ export interface BackupPayload {
   protocols: Protocol[]
   adherence: AdherenceEntry[]
   settings: AppSettings[]
+  supplementChanges: SupplementChangeEntry[]
+  protocolRuns: GlucoseProtocolRun[]
+  labA1cEntries: LabA1cEntry[]
+  duplicateReviews: DuplicateReview[]
 }
 
 const REQUIRED_ARRAY_KEYS: (keyof BackupPayload)[] = [
@@ -31,6 +39,16 @@ const REQUIRED_ARRAY_KEYS: (keyof BackupPayload)[] = [
   'protocols',
   'adherence',
   'settings',
+]
+
+// Added after the original 8 — a backup taken before this upgrade won't
+// have these keys at all. Defaulted to [] rather than required, so an
+// older backup file still restores successfully instead of being rejected.
+const OPTIONAL_ARRAY_KEYS: (keyof BackupPayload)[] = [
+  'supplementChanges',
+  'protocolRuns',
+  'labA1cEntries',
+  'duplicateReviews',
 ]
 
 export function parseBackupFile(text: string): BackupPayload {
@@ -50,6 +68,9 @@ export function parseBackupFile(text: string): BackupPayload {
         `Missing or invalid "${key}" field — this doesn't look like an HbA1c Tracker backup file.`,
       )
     }
+  }
+  for (const key of OPTIONAL_ARRAY_KEYS) {
+    if (!Array.isArray(obj[key])) obj[key] = []
   }
   return obj as unknown as BackupPayload
 }
@@ -76,6 +97,10 @@ export async function restoreBackup(payload: BackupPayload): Promise<RestoreCoun
       db.protocols,
       db.adherence,
       db.settings,
+      db.supplementChanges,
+      db.protocolRuns,
+      db.labA1cEntries,
+      db.duplicateReviews,
     ],
     async () => {
       await Promise.all([
@@ -87,6 +112,10 @@ export async function restoreBackup(payload: BackupPayload): Promise<RestoreCoun
         db.protocols.clear(),
         db.adherence.clear(),
         db.settings.clear(),
+        db.supplementChanges.clear(),
+        db.protocolRuns.clear(),
+        db.labA1cEntries.clear(),
+        db.duplicateReviews.clear(),
       ])
       await Promise.all([
         db.readings.bulkPut(payload.readings),
@@ -97,6 +126,10 @@ export async function restoreBackup(payload: BackupPayload): Promise<RestoreCoun
         db.protocols.bulkPut(payload.protocols),
         db.adherence.bulkPut(payload.adherence),
         db.settings.bulkPut(payload.settings),
+        db.supplementChanges.bulkPut(payload.supplementChanges),
+        db.protocolRuns.bulkPut(payload.protocolRuns),
+        db.labA1cEntries.bulkPut(payload.labA1cEntries),
+        db.duplicateReviews.bulkPut(payload.duplicateReviews),
       ])
     },
   )
@@ -106,6 +139,10 @@ export async function restoreBackup(payload: BackupPayload): Promise<RestoreCoun
     fastingWindows: payload.fastingWindows.length,
     exercise: payload.exercise.length,
     sleep: payload.sleep.length,
+    supplementChanges: payload.supplementChanges.length,
+    protocolRuns: payload.protocolRuns.length,
+    labA1cEntries: payload.labA1cEntries.length,
+    duplicateReviews: payload.duplicateReviews.length,
     protocols: payload.protocols.length,
     adherence: payload.adherence.length,
     settings: payload.settings.length,

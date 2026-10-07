@@ -2,17 +2,33 @@ import { db } from '../db/db'
 import { downloadTextFile, readingsToCsv } from './csv'
 
 export async function exportAllDataAsJson(): Promise<void> {
-  const [readings, meals, fastingWindows, exercise, sleep, protocols, adherence, settings] =
-    await Promise.all([
-      db.readings.toArray(),
-      db.meals.toArray(),
-      db.fastingWindows.toArray(),
-      db.exercise.toArray(),
-      db.sleep.toArray(),
-      db.protocols.toArray(),
-      db.adherence.toArray(),
-      db.settings.toArray(),
-    ])
+  const [
+    readings,
+    meals,
+    fastingWindows,
+    exercise,
+    sleep,
+    protocols,
+    adherence,
+    settings,
+    supplementChanges,
+    protocolRuns,
+    labA1cEntries,
+    duplicateReviews,
+  ] = await Promise.all([
+    db.readings.toArray(),
+    db.meals.toArray(),
+    db.fastingWindows.toArray(),
+    db.exercise.toArray(),
+    db.sleep.toArray(),
+    db.protocols.toArray(),
+    db.adherence.toArray(),
+    db.settings.toArray(),
+    db.supplementChanges.toArray(),
+    db.protocolRuns.toArray(),
+    db.labA1cEntries.toArray(),
+    db.duplicateReviews.toArray(),
+  ])
   const payload = {
     exportedAt: new Date().toISOString(),
     readings,
@@ -23,6 +39,10 @@ export async function exportAllDataAsJson(): Promise<void> {
     protocols,
     adherence,
     settings,
+    supplementChanges,
+    protocolRuns,
+    labA1cEntries,
+    duplicateReviews,
   }
   downloadTextFile(
     `hba1c-tracker-export-${new Date().toISOString().slice(0, 10)}.json`,

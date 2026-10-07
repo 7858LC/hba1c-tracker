@@ -12,6 +12,10 @@ const LABELS: Record<keyof RestoreCounts, string> = {
   protocols: 'protocols',
   adherence: 'adherence entries',
   settings: 'settings records',
+  supplementChanges: 'supplement changes',
+  protocolRuns: 'glucose protocol runs',
+  labA1cEntries: 'lab A1c entries',
+  duplicateReviews: 'duplicate reviews',
 }
 
 export function ImportBackup() {

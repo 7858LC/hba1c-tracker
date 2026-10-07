@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildReadingsFromRows, detectColumnMapping, parseCsvFile } from '../csv'
+import type { GlucoseReading } from '../../types'
+import { buildReadingsFromRows, detectColumnMapping, parseCsvFile, readingsToCsv } from '../csv'
 
 describe('parseCsvFile + detectColumnMapping', () => {
   it('detects date/time/value columns from a typical export header', () => {
@@ -57,5 +58,64 @@ describe('buildReadingsFromRows', () => {
       valueColumn: 'Value',
     })
     expect(results[0].reading).toBeNull()
+  })
+
+  it('imports an old-format 5-column export unchanged (backward compatibility)', () => {
+    const csv = 'timestamp,value_mgdl,context,source,note\n2025-01-01T08:00:00.000Z,110,fasting,manual,\n'
+    const { headers, rows } = parseCsvFile(csv)
+    const mapping = detectColumnMapping(headers)
+    expect(mapping.dateColumn).toBe('timestamp')
+    expect(mapping.valueColumn).toBe('value_mgdl')
+    const results = buildReadingsFromRows(rows, {
+      dateColumn: mapping.dateColumn!,
+      valueColumn: mapping.valueColumn!,
+    })
+    expect(results[0].reading).not.toBeNull()
+    expect(results[0].reading!.value).toBe(110)
+  })
+})
+
+describe('readingsToCsv', () => {
+  function reading(overrides: Partial<GlucoseReading> = {}): GlucoseReading {
+    const t = Date.parse('2025-09-20T12:00:00.000Z')
+    return {
+      id: 1,
+      timestamp: t,
+      value: 110,
+      context: 'fasting',
+      source: 'manual',
+      createdAt: t,
+      updatedAt: t,
+      ...overrides,
+    }
+  }
+
+  it('keeps the original 5 column names present for backward compatibility', () => {
+    const csv = readingsToCsv([reading()])
+    const header = csv.split('\n')[0]
+    for (const col of ['timestamp', 'value_mgdl', 'context', 'source', 'note']) {
+      expect(header).toContain(col)
+    }
+  })
+
+  it('includes the new v2 columns', () => {
+    const csv = readingsToCsv([reading({ mealId: 7, deviceId: 'Contour7', stressLevel: 3 })])
+    const [header, row] = csv.split('\n')
+    expect(header).toContain('meal_id')
+    expect(header).toContain('device_id')
+    expect(header).toContain('stress_level_1_5')
+    expect(row).toContain('7')
+    expect(row).toContain('Contour7')
+  })
+
+  it('reconstructs local time from the stored UTC timestamp and offset, leaving it blank when unknown', () => {
+    // UTC noon, offset -300 (UTC-5, e.g. US Eastern) -> local 07:00
+    const withOffset = readingsToCsv([reading({ timezoneOffsetMinutes: -300 })])
+    expect(withOffset.split('\n')[1]).toContain('2025-09-20T07:00:00')
+
+    const withoutOffset = readingsToCsv([reading({ timezoneOffsetMinutes: undefined })])
+    const cols = withoutOffset.split('\n')[1].split(',')
+    // timestamp_local is the 3rd column (measurement_id, timestamp, timestamp_local, ...)
+    expect(cols[2]).toBe('')
   })
 })

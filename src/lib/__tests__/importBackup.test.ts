@@ -12,6 +12,10 @@ function validPayload() {
     protocols: [],
     adherence: [],
     settings: [],
+    supplementChanges: [],
+    protocolRuns: [],
+    labA1cEntries: [],
+    duplicateReviews: [],
   }
 }
 
@@ -38,5 +42,18 @@ describe('parseBackupFile', () => {
 
   it('rejects a non-object JSON value', () => {
     expect(() => parseBackupFile('42')).toThrow('Unexpected backup format')
+  })
+
+  it('defaults newer optional fields to [] for a backup taken before this upgrade, instead of rejecting it', () => {
+    const old = validPayload() as any
+    delete old.supplementChanges
+    delete old.protocolRuns
+    delete old.labA1cEntries
+    delete old.duplicateReviews
+    const payload = parseBackupFile(JSON.stringify(old))
+    expect(payload.supplementChanges).toEqual([])
+    expect(payload.protocolRuns).toEqual([])
+    expect(payload.labA1cEntries).toEqual([])
+    expect(payload.duplicateReviews).toEqual([])
   })
 })
