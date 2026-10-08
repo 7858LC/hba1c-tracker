@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
+  computeGlucoseByWakeRegularity,
+  computeGlucoseByWaso,
   computeGlucoseBySleepDuration,
   computeGlucoseBySleepQuality,
   computeSleepDurationFastingCorrelation,
@@ -24,6 +26,11 @@ export function SleepRelationshipCard({
 }) {
   const duration = useMemo(() => computeGlucoseBySleepDuration(readings, sleepEntries), [readings, sleepEntries])
   const quality = useMemo(() => computeGlucoseBySleepQuality(readings, sleepEntries), [readings, sleepEntries])
+  const waso = useMemo(() => computeGlucoseByWaso(readings, sleepEntries), [readings, sleepEntries])
+  const wakeRegularity = useMemo(
+    () => computeGlucoseByWakeRegularity(readings, sleepEntries),
+    [readings, sleepEntries],
+  )
   const correlation = useMemo(
     () => computeSleepDurationFastingCorrelation(sleepEntries, readings),
     [readings, sleepEntries],
@@ -73,6 +80,42 @@ export function SleepRelationshipCard({
               </span>
             ))}
           </div>
+        </>
+      )}
+
+      {waso.some((b) => b.eligible) && (
+        <>
+          <h3>By sleep fragmentation (WASO)</h3>
+          <div className="tir-legend">
+            {waso.filter((b) => b.eligible).map((b) => (
+              <span key={b.label}>
+                {b.label}: {b.mean?.toFixed(0)} mg/dL (n={b.readingCount})
+              </span>
+            ))}
+          </div>
+          <p className="stat-caveat">
+            Minutes awake during the sleep period, independent of total duration — a long but
+            broken-up night and a short unbroken one can land in different buckets here even with
+            similar durationMinutes.
+          </p>
+        </>
+      )}
+
+      {wakeRegularity.some((b) => b.eligible) && (
+        <>
+          <h3>By wake-time regularity</h3>
+          <div className="tir-legend">
+            {wakeRegularity.filter((b) => b.eligible).map((b) => (
+              <span key={b.label}>
+                {b.label}: {b.mean?.toFixed(0)} mg/dL (n={b.readingCount})
+              </span>
+            ))}
+          </div>
+          <p className="stat-caveat">
+            How far that morning's wake time deviated from your own recent usual wake time,
+            regardless of how long you slept — scored only once enough recent nights exist to
+            establish what "usual" means for you.
+          </p>
         </>
       )}
     </div>
