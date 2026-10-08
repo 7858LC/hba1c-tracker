@@ -5,6 +5,7 @@ import {
   computeGlucoseByWaso,
   computeGlucoseBySleepDuration,
   computeGlucoseBySleepQuality,
+  computeSleepDisruptionFlags,
   computeSleepDurationFastingCorrelation,
   MIN_SLEEP_DURATION_BUCKET_READINGS,
   MIN_WAKE_REGULARITY_BUCKET_READINGS,
@@ -164,6 +165,67 @@ describe('computeGlucoseByWakeRegularity', () => {
     })
     const result = computeGlucoseByWakeRegularity(readings, sleepEntries)
     expect(result.find((b) => b.label === '<30m')!.eligible).toBe(true)
+  })
+})
+
+describe('computeSleepDisruptionFlags', () => {
+  it('flags a short-duration night when the next morning is above target', () => {
+    const sleepEntries = [sleepNight('2025-09-20', 5 * 60)] // 5h — short
+    const readings = [fastingReading(110, Date.parse('2025-09-21T07:00:00'))]
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result).toHaveLength(1)
+    expect(result[0].shortDuration).toBe(true)
+    expect(result[0].highWaso).toBe(false)
+    expect(result[0].exceedBy).toBeCloseTo(11)
+  })
+
+  it('does not flag an undisrupted night even when above target', () => {
+    const sleepEntries = [{ date: '2025-09-20', durationMinutes: 8 * 60, wasoMinutes: 5, createdAt: 0, updatedAt: 0 }]
+    const readings = [fastingReading(110, Date.parse('2025-09-21T07:00:00'))]
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result).toHaveLength(0)
+  })
+
+  it('does not flag a disrupted night when fasting is at or below target', () => {
+    const sleepEntries = [sleepNight('2025-09-20', 5 * 60)] // short, but...
+    const readings = [fastingReading(90, Date.parse('2025-09-21T07:00:00'))] // below target
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result).toHaveLength(0)
+  })
+
+  it('flags a high-WASO night independent of duration', () => {
+    const sleepEntries = [sleepNightWithWaso('2025-09-20', 45)] // 7h duration (not short), WASO 45 — fragmented
+    const readings = [fastingReading(105, Date.parse('2025-09-21T07:00:00'))]
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result).toHaveLength(1)
+    expect(result[0].highWaso).toBe(true)
+    expect(result[0].shortDuration).toBe(false)
+  })
+
+  it('flags a wake-irregular night once a baseline exists', () => {
+    const sleepEntries = [
+      sleepNightWithWake('2025-09-10', Date.parse('2025-09-10T07:00:00')),
+      sleepNightWithWake('2025-09-11', Date.parse('2025-09-11T07:00:00')),
+      sleepNightWithWake('2025-09-12', Date.parse('2025-09-12T07:00:00')),
+      sleepNightWithWake('2025-09-13', Date.parse('2025-09-13T10:00:00')), // 3h deviation
+    ]
+    const readings = [fastingReading(105, Date.parse('2025-09-14T10:10:00'))]
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result).toHaveLength(1)
+    expect(result[0].wakeIrregular).toBe(true)
+    expect(result[0].shortDuration).toBe(false)
+    expect(result[0].highWaso).toBe(false)
+    expect(result[0].wakeDeviationMinutes).toBeCloseTo(180)
+  })
+
+  it('sorts flags most-recent night first', () => {
+    const sleepEntries = [sleepNight('2025-09-10', 5 * 60), sleepNight('2025-09-12', 5 * 60)]
+    const readings = [
+      fastingReading(110, Date.parse('2025-09-11T07:00:00')),
+      fastingReading(115, Date.parse('2025-09-13T07:00:00')),
+    ]
+    const result = computeSleepDisruptionFlags(readings, sleepEntries, 99)
+    expect(result.map((f) => f.date)).toEqual(['2025-09-12', '2025-09-10'])
   })
 })
 

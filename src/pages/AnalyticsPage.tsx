@@ -13,6 +13,7 @@ import {
   useAllMeals,
   useAllReadings,
   useAllSleep,
+  useSettings,
 } from '../hooks/data'
 
 export function AnalyticsPage() {
@@ -20,6 +21,9 @@ export function AnalyticsPage() {
   const meals = useAllMeals()
   const exercise = useAllExercise()
   const sleep = useAllSleep()
+  const settings = useSettings()
+
+  if (!settings) return <p>Loading…</p>
 
   return (
     <div className="page">
@@ -45,7 +49,11 @@ export function AnalyticsPage() {
       <ExerciseEffectCard readings={readings} exerciseEntries={exercise} />
 
       {/* 6: Sleep Relationship (I) */}
-      <SleepRelationshipCard readings={readings} sleepEntries={sleep} />
+      <SleepRelationshipCard
+        readings={readings}
+        sleepEntries={sleep}
+        targetFastingGlucose={settings.targetFastingGlucose}
+      />
 
       {/* 7: Time-of-Day Pattern (F+G) */}
       <TimePatternsCard readings={readings} />
