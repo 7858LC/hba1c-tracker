@@ -1,3 +1,4 @@
+import { LabForecastCard } from '../components/LabForecastCard'
 import { ProjectionCard } from '../components/ProjectionCard'
 import { useAllReadings, useSettings } from '../hooks/data'
 
@@ -10,6 +11,7 @@ export function ProjectionPage() {
   return (
     <div className="page">
       <ProjectionCard readings={readings} goal={settings.goalHbA1c} />
+      <LabForecastCard readings={readings} goal={settings.goalHbA1c} />
     </div>
   )
 }

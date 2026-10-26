@@ -8,6 +8,10 @@ export function useAllReadings() {
   return useLiveQuery(() => db.readings.orderBy('timestamp').toArray(), []) ?? []
 }
 
+export function useAllLabA1c() {
+  return useLiveQuery(() => db.labA1cEntries.orderBy('labDate').toArray(), []) ?? []
+}
+
 export function useAllMeals() {
   return useLiveQuery(() => db.meals.orderBy('timestamp').toArray(), []) ?? []
 }
