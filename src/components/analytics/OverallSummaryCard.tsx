@@ -47,10 +47,10 @@ export function OverallSummaryCard({ readings }: { readings: GlucoseReading[] })
           <span className="stat-label">CV</span>
         </div>
         <div className="stat-tile">
-          <span className="stat-value estimate" title={`GMI from mean glucose, ADAG formula, error margin ≈ ±${ADAG_ERROR_MARGIN}%`}>
-            {a.gmi?.toFixed(2)}%
+          <span className="stat-value estimate" title={`eA1C from mean glucose, ADAG formula, error margin ≈ ±${ADAG_ERROR_MARGIN}%`}>
+            {a.ea1c?.toFixed(2)}%
           </span>
-          <span className="stat-label">GMI (meter-derived, not a lab A1c)</span>
+          <span className="stat-label">eA1C (ADAG, meter-derived, not a lab A1c)</span>
         </div>
       </div>
 
@@ -68,8 +68,8 @@ export function OverallSummaryCard({ readings }: { readings: GlucoseReading[] })
       )}
 
       <p className="stat-caveat">
-        {a.totalReadings} readings, {a.dateRangeStart} to {a.dateRangeEnd}. GMI is a meter-derived
-        estimate from the mean of ALL readings in range — a different (unweighted-average)
+        {a.totalReadings} readings, {a.dateRangeStart} to {a.dateRangeEnd}. This eA1C (ADAG formula) is a
+        meter-derived estimate from the mean of ALL readings in range — a different (unweighted-average)
         calculation from the dashboard's gated eA1C, and never a substitute for a lab-drawn A1c.
       </p>
     </div>

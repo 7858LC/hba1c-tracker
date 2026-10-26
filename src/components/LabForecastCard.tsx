@@ -25,7 +25,7 @@ export function LabForecastCard({ readings, goal }: { readings: GlucoseReading[]
         A scenario model, not a prediction. It starts from your latest real lab result and shifts
         it by how much your average glucose changes from your last 28 days, using the published
         GMI slope (0.02392 %/mg/dL). The averages are weighted by the clock time each reading
-        context stands for, an assumption. The app's other &quot;GMI/eA1C&quot; numbers use the
+        context stands for, an assumption. The app's eA1C numbers use the
         ADAG formula, which reads lower at normal glucose, so don't compare them directly.
       </p>
 

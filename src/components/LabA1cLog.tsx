@@ -16,7 +16,7 @@ export function LabA1cLog({ readings }: { readings: GlucoseReading[] }) {
         <tr>
           <th>Lab date</th>
           <th>Lab A1c</th>
-          <th>GMI (90d, ending that date)</th>
+          <th>eA1C, ADAG (90d, ending that date)</th>
           <th>Difference</th>
           <th></th>
         </tr>

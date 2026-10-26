@@ -35,11 +35,11 @@ describe('computeOverallAnalytics', () => {
     expect(result.sd).toBeCloseTo(15.81, 1)
   })
 
-  it('computes GMI from the mean via the ADAG formula', () => {
+  it('computes eA1C from the mean via the ADAG formula', () => {
     const now = Date.now()
     const readings = [100, 100].map((v, i) => reading(v, now + i))
     const result = computeOverallAnalytics(readings)
-    expect(result.gmi).toBeCloseTo((100 + 46.7) / 28.7, 5)
+    expect(result.ea1c).toBeCloseTo((100 + 46.7) / 28.7, 5)
   })
 
   it('reports date range from min/max timestamps', () => {

@@ -131,7 +131,7 @@ export function SettingsPage() {
         <h2>Lab A1c history</h2>
         <p className="hint">
           Separate from the single "most recent lab HbA1c" field above (kept for the existing
-          trend-chart reference line) — this is a full history for comparing meter-derived GMI
+          trend-chart reference line) — this is a full history for comparing meter-derived eA1C
           against multiple real draws over time.
         </p>
         <LabA1cForm />

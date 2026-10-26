@@ -35,10 +35,11 @@ export interface OverallAnalytics {
    * Meter-derived estimate (ADAG formula applied to the mean of ALL
    * readings in range) — NOT a diagnostic HbA1c, and NOT the same
    * calculation as the dashboard's gated eA1C (which requires fasting +
-   * meal-relative diversity). Always labeled GMI in the UI to keep it
-   * visually distinct from a lab result.
+   * meal-relative diversity). Always labeled eA1C (ADAG) in the UI, never
+   * GMI: GMI is a different published formula (see gmi.ts) that reads
+   * higher at normal-range glucose.
    */
-  gmi: number | null
+  ea1c: number | null
   distribution: DistributionResult[] | null
 }
 
@@ -62,7 +63,7 @@ export function computeOverallAnalytics(readings: GlucoseReading[]): OverallAnal
       range: null,
       sd: null,
       cv: null,
-      gmi: null,
+      ea1c: null,
       distribution: null,
     }
   }
@@ -81,7 +82,7 @@ export function computeOverallAnalytics(readings: GlucoseReading[]): OverallAnal
     range: range(values),
     sd: standardDeviation(values),
     cv: coefficientOfVariation(values),
-    gmi: m != null ? glucoseToEA1C(m) : null,
+    ea1c: m != null ? glucoseToEA1C(m) : null,
     distribution: bandDistribution(values, OVERALL_BANDS),
   }
 }

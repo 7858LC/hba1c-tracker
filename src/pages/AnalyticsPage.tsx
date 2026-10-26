@@ -62,7 +62,7 @@ export function AnalyticsPage() {
       <div className="card">
         <h2>Laboratory A1c comparison</h2>
         <p className="hint">
-          Lab A1c is shown separately from meter-derived GMI, never implied to be the same
+          Lab A1c is shown separately from meter-derived eA1C, never implied to be the same
           measurement. A difference between them does not by itself prove anything about red
           blood cell lifespan or any other condition.
         </p>
