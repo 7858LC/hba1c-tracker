@@ -234,7 +234,7 @@ export interface GlucoseProtocolRun {
  * A lab-drawn HbA1c history, separate from the single labHbA1c/labHbA1cDate
  * fields on AppSettings (kept as-is for back-compat — that pair still
  * drives the existing single "lab HbA1c" reference line). This is a full
- * history for comparing GMI trend against multiple real draws over time.
+ * history for comparing meter-derived eA1C trend against multiple real draws over time.
  */
 export interface LabA1cEntry {
   id?: number
