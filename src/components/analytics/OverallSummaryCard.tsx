@@ -1,5 +1,6 @@
 import { computeOverallAnalytics } from '../../lib/analyticsOverall'
 import { ADAG_ERROR_MARGIN } from '../../lib/ea1c'
+import { GMI_INTERCEPT, GMI_SLOPE } from '../../lib/gmi'
 import type { GlucoseReading } from '../../types'
 
 export function OverallSummaryCard({ readings }: { readings: GlucoseReading[] }) {
@@ -52,6 +53,15 @@ export function OverallSummaryCard({ readings }: { readings: GlucoseReading[] })
           </span>
           <span className="stat-label">eA1C (ADAG, meter-derived, not a lab A1c)</span>
         </div>
+        <div className="stat-tile">
+          <span
+            className="stat-value estimate"
+            title={`GMI from mean glucose: ${GMI_INTERCEPT} + ${GMI_SLOPE} × mean. A different published formula from ADAG; it reads higher at normal-range glucose. It was built from continuous monitoring, and in an individual it often differs from a lab HbA1c by 0.5 or more.`}
+          >
+            {a.gmi?.toFixed(2)}%
+          </span>
+          <span className="stat-label">GMI (published formula, meter-derived, not a lab A1c)</span>
+        </div>
       </div>
 
       {a.distribution && (
@@ -68,9 +78,12 @@ export function OverallSummaryCard({ readings }: { readings: GlucoseReading[] })
       )}
 
       <p className="stat-caveat">
-        {a.totalReadings} readings, {a.dateRangeStart} to {a.dateRangeEnd}. This eA1C (ADAG formula) is a
-        meter-derived estimate from the mean of ALL readings in range — a different (unweighted-average)
-        calculation from the dashboard's gated eA1C, and never a substitute for a lab-drawn A1c.
+        {a.totalReadings} readings, {a.dateRangeStart} to {a.dateRangeEnd}. The eA1C (ADAG) and GMI
+        tiles come from the same unweighted mean of ALL readings in range, run through two
+        different published formulas, so they differ by about half a point at normal-range
+        glucose. Both are meter-derived estimates, distinct from the dashboard's gated eA1C, and
+        neither is a substitute for a lab-drawn A1c; compare them against your lab results
+        below.
       </p>
     </div>
   )

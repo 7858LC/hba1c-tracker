@@ -1,6 +1,7 @@
 import type { GlucoseReading } from '../types'
 import { toDateKey } from './dates'
 import { glucoseToEA1C } from './ea1c'
+import { glucoseToGMI } from './gmi'
 import {
   bandDistribution,
   coefficientOfVariation,
@@ -40,6 +41,13 @@ export interface OverallAnalytics {
    * higher at normal-range glucose.
    */
   ea1c: number | null
+  /**
+   * GMI (published formula, gmi.ts) applied to the same unweighted mean as
+   * `ea1c`. Shown beside it so the two estimators can be compared. Also not
+   * a diagnostic HbA1c. GMI was derived from continuous monitoring, so this
+   * is a weaker input than it was built for.
+   */
+  gmi: number | null
   distribution: DistributionResult[] | null
 }
 
@@ -64,6 +72,7 @@ export function computeOverallAnalytics(readings: GlucoseReading[]): OverallAnal
       sd: null,
       cv: null,
       ea1c: null,
+      gmi: null,
       distribution: null,
     }
   }
@@ -83,6 +92,7 @@ export function computeOverallAnalytics(readings: GlucoseReading[]): OverallAnal
     sd: standardDeviation(values),
     cv: coefficientOfVariation(values),
     ea1c: m != null ? glucoseToEA1C(m) : null,
+    gmi: m != null ? glucoseToGMI(m) : null,
     distribution: bandDistribution(values, OVERALL_BANDS),
   }
 }
