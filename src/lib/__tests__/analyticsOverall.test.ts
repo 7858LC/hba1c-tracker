@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { GlucoseReading } from '../../types'
 import { computeOverallAnalytics, MIN_OVERALL_READINGS } from '../analyticsOverall'
+import { glucoseToGMI } from '../gmi'
 
 function reading(value: number, timestamp: number): GlucoseReading {
   return { value, timestamp, context: 'random', source: 'manual', createdAt: timestamp, updatedAt: timestamp }
@@ -40,6 +41,19 @@ describe('computeOverallAnalytics', () => {
     const readings = [100, 100].map((v, i) => reading(v, now + i))
     const result = computeOverallAnalytics(readings)
     expect(result.ea1c).toBeCloseTo((100 + 46.7) / 28.7, 5)
+  })
+
+  it('computes GMI from the same mean via the GMI formula, not ADAG', () => {
+    const now = Date.now()
+    const readings = [100, 100].map((v, i) => reading(v, now + i))
+    const result = computeOverallAnalytics(readings)
+    expect(result.gmi).toBeCloseTo(3.31 + 0.02392 * 100, 5)
+    expect(result.gmi).toBeCloseTo(glucoseToGMI(100), 9)
+    expect(result.gmi! - result.ea1c!).toBeGreaterThan(0.5)
+  })
+
+  it('has no GMI without readings', () => {
+    expect(computeOverallAnalytics([]).gmi).toBeNull()
   })
 
   it('reports date range from min/max timestamps', () => {
